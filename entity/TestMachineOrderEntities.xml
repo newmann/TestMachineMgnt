@@ -1,0 +1,646 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+This software is in the public domain under CC0 1.0 Universal plus a
+Grant of Patent License.
+
+To the extent possible under law, the author(s) have dedicated all
+copyright and related and neighboring rights to this software to the
+public domain worldwide. This software is distributed without any
+warranty.
+
+You should have received a copy of the CC0 Public Domain Dedication
+along with this software (see the LICENSE.md file). If not, see
+<http://creativecommons.org/publicdomain/zero/1.0/>.
+-->
+<entities xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/entity-definition-3.xsd">
+    <!-- ========================================================= -->
+    <!--  - beiyelin.testmachine.TestMachineOrder -->
+    <!-- ========================================================= -->
+    <entity entity-name="TestMachineOrderCommunicationEvent" package="beiyelin.testmachine" cache="never">
+        <field name="testMachineOrderId" type="id" is-pk="true"/>
+        <field name="communicationEventId" type="id" is-pk="true"/>
+        <relationship type="one" related="beiyelin.testmachine.TestMachineOrderHeader"/>
+        <relationship type="one" related="mantle.party.communication.CommunicationEvent"/>
+    </entity>
+    <entity entity-name="TestMachineOrderEmailMessage" package="beiyelin.testmachine" cache="never">
+        <field name="testMachineOrderId" type="id" is-pk="true"/>
+        <field name="emailMessageId" type="id" is-pk="true"/>
+        <field name="orderRevision" type="number-integer"/>
+        <field name="partyId" type="id">
+            <description>The Party the email was sent to, for different emails sent to different parties associated with
+                an order
+            </description>
+        </field>
+        <field name="roleTypeId" type="id"/>
+        <relationship type="one" related="beiyelin.testmachine.TestMachineOrderHeader" short-alias="orderHeader"/>
+        <relationship type="one" related="moqui.basic.email.EmailMessage" short-alias="emailMessage"/>
+        <relationship type="one" related="mantle.party.Party" short-alias="party"/>
+        <relationship type="one" related="mantle.party.RoleType" short-alias="roleType"/>
+    </entity>
+
+    <entity entity-name="TestMachineOrderHeader" package="beiyelin.testmachine" short-alias="orders" cache="never">
+        <field name="testMachineOrderId" type="id" is-pk="true"/>
+
+        <field name="testMachineOrderName" type="text-medium"/>
+        <field name="entryDate" type="date-time"/>
+        <field name="approvedDate" type="date-time"/>
+        <field name="completedDate" type="date-time"/>
+        <field name="statusId" type="id" enable-audit-log="true"/>
+        <field name="orderRevision" type="number-integer"/>
+
+        <field name="currencyUomId" type="id"/>
+
+        <field name="displayId" type="text-short">
+            <description>ID to display to customers, can be different from orderId and/or externalId</description>
+        </field>
+        <field name="originId" type="text-short">
+            <description>ID for the order in the original system it came from (system of record) if not the direct
+                upstream system
+            </description>
+        </field>
+        <field name="originUrl" type="text-medium">
+            <description>URL to view the order on the original system it came from</description>
+        </field>
+        <field name="syncStatusId" type="id"/>
+        <field name="systemMessageRemoteId" type="id"/>
+
+        <field name="vendorPartyId" type="id" enable-audit-log="update">
+            <description>如果是内部客户，决定facility范围</description>
+        </field>
+        <field name="customerPartyId" type="id" enable-audit-log="update">
+            <description>使用样机的客户，也代表缺省配送的目的地</description>
+        </field>
+        <field name="facilityId" type="id">
+            <description>发货仓库</description>
+        </field>
+        <field name="shipmentId" type="id">
+            <description>生成的发货单ID</description>
+        </field>
+
+        <field name="enteredByPartyId" type="id"/>
+
+        <field name="parentOrderId" type="id">
+            <description>The original/parent order this is based on, used for all order clones including recurring
+                orders
+            </description>
+        </field>
+
+        <field name="grandTotal" type="currency-amount"/>
+
+        <relationship type="one" title="OrderHeader" related="moqui.basic.StatusItem" short-alias="status"/>
+        <relationship type="one" title="Currency" related="moqui.basic.Uom" short-alias="currencyUom">
+            <key-map field-name="currencyUomId"/>
+        </relationship>
+
+        <relationship type="one" title="Sync" related="moqui.basic.StatusItem" short-alias="syncStatus">
+            <key-map field-name="syncStatusId"/>
+        </relationship>
+        <relationship type="one" related="moqui.service.message.SystemMessageRemote" short-alias="systemMessageRemote"/>
+        <relationship type="one" title="EnteredBy" related="mantle.party.Party" short-alias="enteredByParty">
+            <key-map field-name="enteredByPartyId" related="partyId"/>
+        </relationship>
+        <relationship type="one" title="Parent" related="beiyelin.testmachine.TestMachineOrderHeader"
+                      short-alias="parentOrder">
+            <key-map field-name="parentOrderId" related="testMachineOrderId"/>
+        </relationship>
+
+        <relationship type="one" title="Vendor" related="mantle.party.Party" short-alias="vendor">
+            <key-map field-name="vendorPartyId"/>
+        </relationship>
+
+        <relationship type="one" title="Customer" related="mantle.party.Party" short-alias="customer">
+            <key-map field-name="customerPartyId"/>
+        </relationship>
+
+
+        <relationship type="one" related="Facility" short-alias="facility"/>
+        <!-- These are not generally necessary, reverse relationships are created automatically, but needed to specify
+            the short-alias for use in entity REST requests and quick path look ups -->
+        <relationship type="many" related="beiyelin.testmachine.TestMachineOrderItem" short-alias="items">
+            <key-map field-name="testMachineOrderId"/>
+        </relationship>
+        <relationship type="many" related="beiyelin.testmachine.TestMachineOrderNote" short-alias="notes">
+            <key-map field-name="testMachineOrderId"/>
+        </relationship>
+        <relationship type="many" related="beiyelin.testmachine.TestMachineOrderCommunicationEvent"
+                      short-alias="communicationEvents">
+            <key-map field-name="testMachineOrderId"/>
+        </relationship>
+        <relationship type="many" related="beiyelin.testmachine.TestMachineOrderEmailMessage"
+                      short-alias="emailMessages">
+            <key-map field-name="testMachineOrderId"/>
+        </relationship>
+        <relationship type="many" related="mantle.account.payment.Payment" short-alias="payments">
+            <key-map field-name="testMachineOrderId"/>
+        </relationship>
+        <relationship type="many" title="Child" related="beiyelin.testmachine.TestMachineOrderHeader"
+                      short-alias="childOrders">
+            <key-map field-name="testMachineOrderId" related="parentOrderId"/>
+        </relationship>
+
+        <relationship type="many" title="Status" related="moqui.entity.EntityAuditLog" short-alias="statusLogs">
+            <key-map field-name="testMachineOrderId" related="pkPrimaryValue"/>
+            <key-value related="changedEntityName" value="beiyelin.testmachine.TestMachineOrderHeader"/>
+            <key-value related="changedFieldName" value="statusId"/>
+        </relationship>
+
+        <index name="ORDERDISP_ID_IDX">
+            <index-field name="displayId"/>
+        </index>
+        <index name="ORDEREXT_ID_IDX">
+            <index-field name="externalId"/>
+        </index>
+        <index name="ORDERORIG_ID_IDX">
+            <index-field name="originId"/>
+        </index>
+
+        <seed-data>
+            <!-- Order Header Status -->
+            <moqui.basic.StatusType description="Test Machine Order Header Status"
+                                    statusTypeId="TestMachineOrderHeader"/>
+            <moqui.basic.LocalizedEntityField entityName="moqui.basic.StatusType" fieldName="description"
+                                              pkValue="TestMachineOrderHeader" locale="zh_CN"
+                                              localized="样机申请单状态"/>
+
+            <!-- An Open Order is like a shopping cart -->
+            <moqui.basic.StatusItem description="Open (Tentative)" sequenceNum="1" statusId="TMOHSOpen"
+                                    statusTypeId="TestMachineOrderHeader"/>
+            <moqui.basic.LocalizedEntityField entityName="moqui.basic.StatusItem" fieldName="description"
+                                              pkValue="TMOHSOpen" locale="zh_CN" localized="草稿"/>
+
+            <moqui.basic.StatusItem description="Confirmed" sequenceNum="2" statusId="TMOHSConfirmed"
+                                    statusTypeId="TestMachineOrderHeader"/>
+            <moqui.basic.LocalizedEntityField entityName="moqui.basic.StatusItem" fieldName="description"
+                                              pkValue="TMOHSConfirmed" locale="zh_CN" localized="已提交"/>
+
+            <moqui.basic.StatusItem description="Approved" sequenceNum="3" statusId="TMOHSApproved"
+                                    statusTypeId="TestMachineOrderHeader"/>
+            <moqui.basic.LocalizedEntityField entityName="moqui.basic.StatusItem" fieldName="description"
+                                              pkValue="TMOHSApproved" locale="zh_CN" localized="已批准"/>
+
+            <moqui.basic.StatusItem description="Processing" sequenceNum="4" statusId="TMOHSProcessing"
+                                    statusTypeId="TestMachineOrderHeader"/>
+            <moqui.basic.LocalizedEntityField entityName="moqui.basic.StatusItem" fieldName="description"
+                                              pkValue="TMOHSProcessing" locale="zh_CN" localized="处理中"/>
+
+            <moqui.basic.StatusItem description="Completed" sequenceNum="4" statusId="TMOHSCompleted"
+                                    statusTypeId="TestMachineOrderHeader"/>
+            <moqui.basic.LocalizedEntityField entityName="moqui.basic.StatusItem" fieldName="description"
+                                              pkValue="TMOHSCompleted" locale="zh_CN" localized="已完成"/>
+
+            <!-- Reject done by Approver -->
+            <moqui.basic.StatusItem description="Rejected" sequenceNum="98" statusId="TMOHSRejected"
+                                    statusTypeId="TestMachineOrderHeader"/>
+            <moqui.basic.LocalizedEntityField entityName="moqui.basic.StatusItem" fieldName="description"
+                                              pkValue="TMOHSRejected" locale="zh_CN" localized="已拒绝"/>
+            <!-- Cancel done by applicants -->
+            <moqui.basic.StatusItem description="Cancelled" sequenceNum="99" statusId="TMOHSCancelled"
+                                    statusTypeId="TestMachineOrderHeader"/>
+            <moqui.basic.LocalizedEntityField entityName="moqui.basic.StatusItem" fieldName="description"
+                                              pkValue="TMOHSCancelled" locale="zh_CN" localized="已取消"/>
+
+
+            <moqui.basic.StatusFlowTransition statusFlowId="Default" statusId="TMOHSOpen" toStatusId="TMOHSConfirmed"
+                                              transitionName="Confirm"/>
+            <moqui.basic.StatusFlowTransition statusFlowId="Default" statusId="TMOHSConfirmed"
+                                              toStatusId="TMOHSApproved" transitionName="Approve"/>
+            <moqui.basic.StatusFlowTransition statusFlowId="Default" statusId="TMOHSConfirmed"
+                                              toStatusId="TMOHSRejected" transitionName="Reject"/>
+            <moqui.basic.StatusFlowTransition statusFlowId="Default" statusId="TMOHSConfirmed"
+                                              toStatusId="TMOHSCancelled" transitionName="Cancel"/>
+
+            <moqui.basic.StatusFlowTransition statusFlowId="Default" statusId="TMOHSApproved"
+                                              toStatusId="TMOHSProcessing" transitionName="Process"/>
+            <moqui.basic.StatusFlowTransition statusFlowId="Default" statusId="TMOHSApproved"
+                                              toStatusId="TMOHSCancelled" transitionName="Cancel"/>
+
+            <moqui.basic.StatusFlowTransition statusFlowId="Default" statusId="TMOHSProcessing"
+                                              toStatusId="TMOHSCompleted" transitionName="Complete"/>
+
+        </seed-data>
+        <master>
+            <detail relationship="status"/>
+            <!-- TODO: add status history using EntityAuditLog -->
+            <detail relationship="currencyUom"/>
+
+
+            <detail relationship="status"/>
+            <detail relationship="items">
+                <detail relationship="itemType"/>
+                <detail relationship="product"/>
+                <detail relationship="quantityUom"/>
+                <detail relationship="reservations"/>
+                <detail relationship="issuances"/>
+                <detail relationship="receipts"/>
+                <detail relationship="shipmentSources"/>
+                <detail relationship="billings"/>
+            </detail>
+            <detail relationship="parties">
+                <!-- NOTE: Party is also a master entity, could use mechanism to inherit detail but better to
+                    be explicit about what is relevant in a Party for orders -->
+                <detail relationship="party" use-master="contact"/>
+                <detail relationship="roleType"/>
+            </detail>
+            <detail relationship="contactMechs">
+                <detail relationship="contactMech" use-master="default"/>
+            </detail>
+            <detail relationship="terms">
+                <detail relationship="term"/>
+            </detail>
+            <detail relationship="vendor" use-master="basic"/>
+            <detail relationship="customer" use-master="basic"/>
+            <detail relationship="carrier" use-master="basic"/>
+            <detail relationship="shipmentMethod"/>
+            <detail relationship="postal" use-master="default"/>
+            <detail relationship="telecom" use-master="default"/>
+            <detail relationship="facility"/>
+            <detail relationship="payments" use-master="default"/>
+
+            <detail relationship="notes"/>
+            <detail relationship="communicationEvents"/>
+        </master>
+    </entity>
+    <entity entity-name="TestMachineOrderItem" package="beiyelin.testmachine" short-alias="orderItems" cache="never">
+        <field name="testMachineOrderId" type="id" is-pk="true"/>
+        <field name="testMachineOrderItemSeqId" type="id" is-pk="true"/>
+
+        <field name="productId" type="id" enable-audit-log="update"/>
+        <field name="itemDescription" type="text-medium"/>
+        <field name="comments" type="text-medium"/>
+
+        <field name="quantity" type="number-decimal" enable-audit-log="true"/>
+        <field name="quantityUomId" type="id"/>
+        <field name="unitAmount" type="currency-precise" enable-audit-log="true">
+            <description>The purchase or sales price. For barter/exchange orders this represents the market value of the
+                item at
+                the time of the exchange in terms of the OrderHeader.currencyUomId.
+            </description>
+        </field>
+        <field name="amount" type="number-decimal"/>
+        <field name="unitListPrice" type="currency-precise"/>
+        <field name="standardCost" type="currency-precise" enable-audit-log="true">
+            <description>For purchase orders the cost for accounting purposes if different from unitAmount. Used to set
+                Asset.acquireCost on receipt.
+            </description>
+        </field>
+
+        <field name="quantityReserved" type="number-decimal">
+            <description>预定库存的数量</description>
+        </field>
+        <field name="quantityShipped" type="number-decimal">
+            <description>已发货的数量</description>
+        </field>
+
+        <relationship type="one" related="beiyelin.testmachine.TestMachineOrderHeader" short-alias="header"/>
+
+        <relationship type="one" related="mantle.product.Product" short-alias="product"/>
+
+        <relationship type="one" title="Quantity" related="moqui.basic.Uom" short-alias="quantityUom">
+            <key-map field-name="quantityUomId"/>
+        </relationship>
+
+    </entity>
+
+    <entity entity-name="TestMachineOrderNote" package="beiyelin.testmachine" cache="never">
+        <field name="testMachineOrderId" type="id" is-pk="true"/>
+        <field name="noteDate" type="date-time" is-pk="true" default="ec.user.nowTimestamp"/>
+        <field name="noteText" type="text-long" enable-audit-log="update"/>
+        <field name="internalNote" type="text-indicator"/>
+        <field name="userId" type="id" default="ec.user.userId"/>
+        <relationship type="one" related="beiyelin.testmachine.TestMachineOrderHeader"/>
+        <relationship type="one" related="moqui.security.UserAccount"/>
+    </entity>
+
+    <!-- ========================================================= -->
+    <!--  - beiyelin.testmachine.return -->
+    <!-- ========================================================= -->
+    <entity entity-name="TestMachineReturnContactMech" package="beiyelin.testmachine" cache="never">
+        <field name="testMachineReturnId" type="id" is-pk="true"/>
+        <field name="contactMechPurposeId" type="id" is-pk="true"/>
+        <field name="contactMechId" type="id" is-pk="true"/>
+        <relationship type="one" related="beiyelin.testmachine.TestMachineReturnHeader"/>
+        <relationship type="one" related="mantle.party.contact.ContactMech"/>
+        <relationship type="one" related="mantle.party.contact.ContactMechPurpose"/>
+    </entity>
+
+    <entity entity-name="TestMachineReturnHeader" package="beiyelin.testmachine" short-alias="returns" cache="never">
+        <field name="testMachineReturnId" type="id" is-pk="true"/>
+        <field name="statusId" type="id" enable-audit-log="true"/>
+        <field name="customerPartyId" type="id">
+            <description>从该客户退回</description>
+        </field>
+        <field name="vendorPartyId" type="id">
+            <description>退回的内部主体</description>
+        </field>
+        <field name="entryDate" type="date-time"/>
+        <field name="facilityId" type="id">
+            <description>退回仓库</description>
+        </field>
+        <field name="shipmentMethodEnumId" type="id">
+            <description>Only needed for generating a return label, can also be specified on return shipment
+            </description>
+        </field>
+        <field name="currencyUomId" type="id"/>
+        <field name="shipmentId" type="id"/>
+
+        <field name="systemMessageRemoteId" type="id"/>
+
+        <relationship type="one" title="Return" related="moqui.basic.StatusItem" short-alias="status"/>
+        <relationship type="one" title="Customer" related="mantle.party.Party" short-alias="customer">
+            <key-map field-name="customerPartyId"/>
+        </relationship>
+        <relationship type="one" title="Vendor" related="mantle.party.Party" short-alias="vendor">
+            <key-map field-name="vendorPartyId"/>
+        </relationship>
+
+        <relationship type="one" related="mantle.facility.Facility" short-alias="facility"/>
+
+        <relationship type="one" related="mantle.shipment.Shipment" short-alias="shipment"/>
+        <relationship type="one" title="ShipmentMethod" related="moqui.basic.Enumeration" short-alias="shipmentMethod">
+            <key-map field-name="shipmentMethodEnumId"/>
+        </relationship>
+
+        <relationship type="one" title="Currency" related="moqui.basic.Uom" short-alias="currencyUom">
+            <key-map field-name="currencyUomId"/>
+        </relationship>
+
+        <relationship type="one" related="moqui.service.message.SystemMessageRemote" short-alias="systemMessageRemote"/>
+
+        <relationship type="many" related="beiyelin.testmachine.TestMachineReturnItem" short-alias="items">
+            <key-map field-name="testMachineReturnId"/>
+        </relationship>
+
+        <master>
+            <detail relationship="status"/>
+            <!-- TODO: add status history using EntityAuditLog -->
+            <detail relationship="vendor" use-master="basic"/>
+            <detail relationship="customer" use-master="basic"/>
+            <detail relationship="shipmentMethod"/>
+            <detail relationship="currencyUom"/>
+            <!-- TODO <detail relationship="contents"><detail relationship="type"/></detail> -->
+
+            <detail relationship="items">
+                <detail relationship="status"/>
+                <detail relationship="product"/>
+                <detail relationship="orderItem"/>
+                <detail relationship="issuances"/>
+                <detail relationship="receipts"/>
+                <detail relationship="shipmentSources"/>
+                <detail relationship="billings"/>
+            </detail>
+        </master>
+    </entity>
+
+    <entity entity-name="TestMachineReturnItem" package="beiyelin.testmachine" short-alias="returnItems" cache="never">
+        <field name="testMachineReturnId" type="id" is-pk="true"/>
+        <field name="testMachineReturnItemSeqId" type="id" is-pk="true"/>
+
+        <field name="productId" type="id"/>
+        <field name="description" type="text-medium"/>
+        <field name="testMachineOrderId" type="id"/>
+        <field name="testMachineOrderPartItemSeqId" type="id"/>
+        <field name="assetId" type="id"/>
+        <field name="returnQuantity" type="number-decimal" enable-audit-log="update">
+            <description>Quantity promised by customer</description>
+        </field>
+        <field name="receivedQuantity" type="number-decimal" enable-audit-log="update">
+            <description>Quantity actually received from customer</description>
+        </field>
+        <field name="unitPrice" type="currency-amount" enable-audit-log="update"/>
+        <field name="amount" type="currency-amount"/>
+
+
+        <relationship type="one" related="beiyelin.testmachine.TestMachineReturnHeader" short-alias="returnHeader"/>
+
+        <relationship type="one-nofk" related="beiyelin.testmachine.TestMachineOrderHeader" short-alias="orderHeader"/>
+        <relationship type="one-nofk" related="beiyelin.testmachine.TestMachineOrderItem" short-alias="orderItem"/>
+
+        <relationship type="one" related="mantle.product.Product" short-alias="product"/>
+
+        <relationship type="many" related="mantle.product.issuance.AssetIssuance" short-alias="issuances">
+            <key-map field-name="testMachineReturnId"/>
+            <key-map field-name="testMachineReturnItemSeqId"/>
+        </relationship>
+        <relationship type="many" related="mantle.product.receipt.AssetReceipt" short-alias="receipts">
+            <key-map field-name="testMachineReturnId"/>
+            <key-map field-name="testMachineReturnItemSeqId"/>
+        </relationship>
+        <relationship type="many" related="mantle.shipment.ShipmentItemSource" short-alias="shipmentSources">
+            <key-map field-name="testMachineReturnId"/>
+            <key-map field-name="testMachineReturnItemSeqId"/>
+        </relationship>
+        <index name="RTN_ITM_BYORDITM">
+            <index-field name="testMachineOrderId"/>
+            <index-field name="testMachineOrderItemSeqId"/>
+        </index>
+    </entity>
+    <!-- ========================================================= -->
+    <!--  - beiyelin.testmachine.AssetBorrow -->
+    <!-- ========================================================= -->
+    <entity entity-name="AssetBorrow" package="beiyelin.testmachine" cache="never">
+        <field name="assetBorrowId" type="id" is-pk="true"/>
+        <field name="assetId" type="id"/>
+        <field name="borrowPartyId" type="id"/>
+        <field name="productId" type="id"/>
+        <field name="testMachineOrderId" type="id"/>
+        <field name="testMachineOrderItemSeqId" type="id"/>
+        <field name="quantity" type="number-decimal"/>
+        <field name="quantityReturned" type="number-decimal">
+            <description>The quantity returned.</description>
+        </field>
+        <field name="borrowDate" type="date-time"/>
+        <field name="planReturnDate" type="date-time"></field>
+        <relationship type="one" related="mantle.product.asset.Asset" short-alias="asset"/>
+        <relationship type="one" related="mantle.product.Product" short-alias="product"/>
+        <relationship type="one-nofk" related="beiyelin.testmachine.TestMachineOrderHeader" short-alias="orderHeader"/>
+        <relationship type="one" related="beiyelin.testmachine.TestMachineOrderItem" short-alias="orderItem"/>
+    </entity>
+    <!-- ========================================================= -->
+    <!--  - beiyelin.testmachine.TestMachineSale -->
+    <!-- ========================================================= -->
+    <entity entity-name="TestMachineSaleCommunicationEvent" package="beiyelin.testmachine" cache="never">
+        <field name="testMachineSaleId" type="id" is-pk="true"/>
+        <field name="communicationEventId" type="id" is-pk="true"/>
+        <relationship type="one" related="beiyelin.testmachine.TestMachineSaleHeader"/>
+        <relationship type="one" related="mantle.party.communication.CommunicationEvent"/>
+    </entity>
+
+    <entity entity-name="TestMachineSaleHeader" package="beiyelin.testmachine" short-alias="sales" cache="never">
+        <field name="testMachineSaleId" type="id" is-pk="true"/>
+
+        <field name="testMachineSaleName" type="text-medium"/>
+        <field name="entryDate" type="date-time"/>
+        <field name="approvedDate" type="date-time"/>
+        <field name="completedDate" type="date-time"/>
+        <field name="statusId" type="id" enable-audit-log="true"/>
+        <field name="saleRevision" type="number-integer"/>
+
+        <field name="currencyUomId" type="id"/>
+
+
+        <field name="ownerPartyId" type="id" enable-audit-log="update">
+            <description>本次交易归属的组织</description>
+        </field>
+        <field name="vendorPartyId" type="id" enable-audit-log="update">
+            <description>本次交易的供应商。如果是供应商借用的样机，则为供应商，如果是公司自有样机，这和ownerPartyId一致
+            </description>
+        </field>
+        <field name="customerPartyId" type="id" enable-audit-log="update">
+            <description>交易的客户</description>
+        </field>
+
+
+        <field name="grandTotal" type="currency-amount"/>
+
+        <relationship type="one" title="TestMachineSaleHeader" related="moqui.basic.StatusItem" short-alias="status"/>
+        <relationship type="one" title="Currency" related="moqui.basic.Uom" short-alias="currencyUom">
+            <key-map field-name="currencyUomId"/>
+        </relationship>
+
+
+        <!-- These are not generally necessary, reverse relationships are created automatically, but needed to specify
+            the short-alias for use in entity REST requests and quick path look ups -->
+        <relationship type="many" related="beiyelin.testmachine.TestMachineSaleItem" short-alias="items">
+            <key-map field-name="testMachineSaleId"/>
+        </relationship>
+        <relationship type="many" related="beiyelin.testmachine.TestMachineSaleNote" short-alias="notes">
+            <key-map field-name="testMachineSaleId"/>
+        </relationship>
+        <relationship type="many" related="beiyelin.testmachine.TestMachineSaleCommunicationEvent"
+                      short-alias="communicationEvents">
+            <key-map field-name="testMachineSaleId"/>
+        </relationship>
+
+        <relationship type="many" title="Status" related="moqui.entity.EntityAuditLog" short-alias="statusLogs">
+            <key-map field-name="testMachineSaleId" related="pkPrimaryValue"/>
+            <key-value related="changedEntityName" value="beiyelin.testmachine.TestMachineSaleHeader"/>
+            <key-value related="changedFieldName" value="statusId"/>
+        </relationship>
+
+        <seed-data>
+            <!-- Test Machine Sale Header Status -->
+            <moqui.basic.StatusType description="Test Machine Sale Header Status" statusTypeId="TestMachineSaleHeader"/>
+            <moqui.basic.LocalizedEntityField entityName="moqui.basic.StatusType" fieldName="description"
+                                              pkValue="TestMachineSaleHeader" locale="zh_CN"
+                                              localized="样机销售单状态"/>
+
+            <moqui.basic.StatusItem description="Open (Tentative)" sequenceNum="1" statusId="TMSHOpen"
+                                    statusTypeId="TestMachineSaleHeader"/>
+            <moqui.basic.LocalizedEntityField entityName="moqui.basic.StatusItem" fieldName="description"
+                                              pkValue="TMOHSOpen" locale="zh_CN" localized="草稿"/>
+
+            <moqui.basic.StatusItem description="Confirmed" sequenceNum="2" statusId="TMSHConfirmed"
+                                    statusTypeId="TestMachineSaleHeader"/>
+            <moqui.basic.LocalizedEntityField entityName="moqui.basic.StatusItem" fieldName="description"
+                                              pkValue="TMSHConfirmed" locale="zh_CN" localized="已提交"/>
+
+            <moqui.basic.StatusItem description="Approved" sequenceNum="3" statusId="TMSHApproved"
+                                    statusTypeId="TestMachineSaleHeader"/>
+            <moqui.basic.LocalizedEntityField entityName="moqui.basic.StatusItem" fieldName="description"
+                                              pkValue="TMSHApproved" locale="zh_CN" localized="已批准"/>
+
+            <moqui.basic.StatusItem description="Completed" sequenceNum="4" statusId="TMSHCompleted"
+                                    statusTypeId="TestMachineSaleHeader"/>
+            <moqui.basic.LocalizedEntityField entityName="moqui.basic.StatusItem" fieldName="description"
+                                              pkValue="TMSHCompleted" locale="zh_CN" localized="已完成"/>
+
+            <!-- Reject done by Approver -->
+            <moqui.basic.StatusItem description="Rejected" sequenceNum="98" statusId="TMSHRejected"
+                                    statusTypeId="TestMachineSaleHeader"/>
+            <moqui.basic.LocalizedEntityField entityName="moqui.basic.StatusItem" fieldName="description"
+                                              pkValue="TMSHRejected" locale="zh_CN" localized="已拒绝"/>
+            <!-- Cancel done by applicants -->
+            <moqui.basic.StatusItem description="Cancelled" sequenceNum="99" statusId="TMSHCancelled"
+                                    statusTypeId="TestMachineSaleHeader"/>
+            <moqui.basic.LocalizedEntityField entityName="moqui.basic.StatusItem" fieldName="description"
+                                              pkValue="TMSHCancelled" locale="zh_CN" localized="已取消"/>
+
+
+            <moqui.basic.StatusFlowTransition statusFlowId="Default" statusId="TMSHOpen" toStatusId="TMSHConfirmed"
+                                              transitionName="Confirm"/>
+            <moqui.basic.StatusFlowTransition statusFlowId="Default" statusId="TMSHConfirmed" toStatusId="TMSHApproved"
+                                              transitionName="Approve"/>
+            <moqui.basic.StatusFlowTransition statusFlowId="Default" statusId="TMSHConfirmed" toStatusId="TMSHRejected"
+                                              transitionName="Reject"/>
+            <moqui.basic.StatusFlowTransition statusFlowId="Default" statusId="TMSHConfirmed" toStatusId="TMSHCancelled"
+                                              transitionName="Cancel"/>
+
+            <moqui.basic.StatusFlowTransition statusFlowId="Default" statusId="TMSHApproved" toStatusId="TMSHCancelled"
+                                              transitionName="Cancel"/>
+
+            <moqui.basic.StatusFlowTransition statusFlowId="Default" statusId="TMSHApproved" toStatusId="TMSHCompleted"
+                                              transitionName="Complete"/>
+
+        </seed-data>
+        <master>
+            <detail relationship="status"/>
+            <!-- TODO: add status history using EntityAuditLog -->
+            <detail relationship="currencyUom"/>
+
+
+            <detail relationship="status"/>
+            <detail relationship="items">
+                <detail relationship="itemType"/>
+                <detail relationship="product"/>
+                <detail relationship="quantityUom"/>
+                <detail relationship="orderHeader"/>
+                <detail relationship="orderItem"/>
+            </detail>
+
+            <detail relationship="contactMechs">
+                <detail relationship="contactMech" use-master="default"/>
+            </detail>
+            <detail relationship="terms">
+                <detail relationship="term"/>
+            </detail>
+            <detail relationship="vendor" use-master="basic"/>
+            <detail relationship="customer" use-master="basic"/>
+            <detail relationship="carrier" use-master="basic"/>
+            <detail relationship="shipmentMethod"/>
+            <detail relationship="postal" use-master="default"/>
+            <detail relationship="telecom" use-master="default"/>
+            <detail relationship="facility"/>
+            <detail relationship="payments" use-master="default"/>
+
+            <detail relationship="notes"/>
+            <detail relationship="communicationEvents"/>
+        </master>
+    </entity>
+    <entity entity-name="TestMachineSaleItem" package="beiyelin.testmachine" short-alias="saleItems" cache="never">
+        <field name="testMachineSaleId" type="id" is-pk="true"/>
+        <field name="testMachineSaleItemSeqId" type="id" is-pk="true"/>
+
+        <field name="productId" type="id" enable-audit-log="update"/>
+        <field name="itemDescription" type="text-medium"/>
+        <field name="comments" type="text-medium"/>
+        <field name="testMachineOrderId" type="id"/>
+        <field name="testMachineOrderItemSeqId" type="id"/>
+        <field name="quantity" type="number-decimal" enable-audit-log="true"/>
+        <field name="quantityUomId" type="id"/>
+        <field name="unitAmount" type="currency-precise" enable-audit-log="true"></field>
+        <field name="amount" type="number-decimal"/>
+        <field name="unitListPrice" type="currency-precise"/>
+        <field name="standardCost" type="currency-precise" enable-audit-log="true"/>
+
+        <relationship type="one" related="beiyelin.testmachine.TestMachineOrderHeader" short-alias="header"/>
+
+        <relationship type="one" related="mantle.product.Product" short-alias="product"/>
+        <relationship type="one-nofk" related="beiyelin.testmachine.TestMachineOrderHeader" short-alias="orderHeader"/>
+        <relationship type="one" related="beiyelin.testmachine.TestMachineOrderItem" short-alias="orderItem"/>
+        <relationship type="one" title="Quantity" related="moqui.basic.Uom" short-alias="quantityUom">
+            <key-map field-name="quantityUomId"/>
+        </relationship>
+
+    </entity>
+
+    <entity entity-name="TestMachineSaleNote" package="beiyelin.testmachine" cache="never">
+        <field name="testMachineSaleId" type="id" is-pk="true"/>
+        <field name="noteDate" type="date-time" is-pk="true" default="ec.user.nowTimestamp"/>
+        <field name="noteText" type="text-long" enable-audit-log="update"/>
+        <field name="internalNote" type="text-indicator"/>
+        <field name="userId" type="id" default="ec.user.userId"/>
+        <relationship type="one" related="beiyelin.testmachine.TestMachineSaleHeader"/>
+        <relationship type="one" related="moqui.security.UserAccount"/>
+    </entity>
+</entities>
