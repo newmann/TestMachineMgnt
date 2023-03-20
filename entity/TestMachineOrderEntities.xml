@@ -399,7 +399,7 @@ along with this software (see the LICENSE.md file). If not, see
         <field name="productId" type="id"/>
         <field name="description" type="text-medium"/>
         <field name="testMachineOrderId" type="id"/>
-        <field name="testMachineOrderPartItemSeqId" type="id"/>
+        <field name="testMachineOrderItemSeqId" type="id"/>
         <field name="assetId" type="id"/>
         <field name="returnQuantity" type="number-decimal" enable-audit-log="update">
             <description>Quantity promised by customer</description>
@@ -643,4 +643,13 @@ along with this software (see the LICENSE.md file). If not, see
         <relationship type="one" related="beiyelin.testmachine.TestMachineSaleHeader"/>
         <relationship type="one" related="moqui.security.UserAccount"/>
     </entity>
+
+    <extend-entity entity-name="AssetDetail" package="mantle.product.asset">
+        <field name="testMachineOrderId" type="id"/>
+        <field name="testMachineOrderItemSeqId" type="id"/>
+        <field name="testMachineReturnOrderId" type="id"/>
+        <field name="testMachineReturnOrderItemSeqId" type="id"/>
+        <field name="testMachineSaleId" type="id"/>
+        <field name="testMachineSaleItemSeqId" type="id"/>
+    </extend-entity>
 </entities>
