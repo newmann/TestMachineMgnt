@@ -6,7 +6,7 @@
 <!--            <subscreens-item name="site" location="component://example/screen/ExampleSite.xml"/>-->
 <!--        </screen>-->
         <screen location="component://webroot/screen/webroot/apps.xml">
-            <subscreens-item name="TestMachineRoot" menu-title="样机管理系统" menu-index="97" location="component://TestMachineMgnt/screen/TestMachineApp.xml"/>
+            <subscreens-item name="testmachine" menu-title="样机管理系统" menu-index="97" location="component://TestMachineMgnt/screen/TestMachineApp.xml"/>
         </screen>
     </screen-facade>
 </moqui-conf>

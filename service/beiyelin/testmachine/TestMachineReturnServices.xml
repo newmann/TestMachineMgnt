@@ -12,264 +12,303 @@ You should have received a copy of the CC0 Public Domain Dedication
 along with this software (see the LICENSE.md file). If not, see
 <http://creativecommons.org/publicdomain/zero/1.0/>.
 -->
-<services xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/service-definition-3.xsd">
+<services xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/service-definition-3.xsd">
 
-    <service verb="get" noun="ReturnDisplayInfo">
-        <in-parameters><parameter name="returnId" required="true"/></in-parameters>
+    <service verb="get" noun="TestMachineReturnDisplayInfo">
+        <in-parameters>
+            <parameter name="testMachineReturnId" required="true"/>
+        </in-parameters>
         <out-parameters>
             <parameter name="testMachineReturnHeader" type="Map"/>
             <parameter name="statusId"/>
-            <parameter name="statusHistoryList" type="List"><parameter name="auditLog" type="Map"/></parameter>
+            <parameter name="statusHistoryList" type="List">
+                <parameter name="auditLog" type="Map"/>
+            </parameter>
             <parameter name="returnChangeable" type="Boolean"/>
             <parameter name="isVendorOrgInternal" type="Boolean"/>
-            <parameter name="orgPartyId"/><parameter name="shippingPartyId"/>
+            <parameter name="orgPartyId"/>
+            <parameter name="shippingPartyId"/>
 
-            <parameter name="returnItemList" type="List"><parameter name="returnItem" type="Map"/></parameter>
-            <parameter name="postalAddressList" type="List"><parameter name="postalAddress" type="Map"/></parameter>
-            <parameter name="telecomNumberList" type="List"><parameter name="telecomNumber" type="Map"/></parameter>
+            <parameter name="testMachineReturnItemList" type="List">
+                <parameter name="testMachineReturnItem" type="Map"/>
+            </parameter>
+            <parameter name="postalAddressList" type="List">
+                <parameter name="postalAddress" type="Map"/>
+            </parameter>
+            <parameter name="telecomNumberList" type="List">
+                <parameter name="telecomNumber" type="Map"/>
+            </parameter>
 
-            <parameter name="salesOrderIdSet" type="Set"><parameter name="salesOrderId"/></parameter>
-            <parameter name="replacementOrderIdSet" type="Set"><parameter name="replacementOrderId"/></parameter>
-            <parameter name="purchaseOrderIdSet" type="Set"><parameter name="purchaseOrderId"/></parameter>
+            <parameter name="salesOrderIdSet" type="Set">
+                <parameter name="salesOrderId"/>
+            </parameter>
+            <parameter name="replacementOrderIdSet" type="Set">
+                <parameter name="replacementOrderId"/>
+            </parameter>
+            <parameter name="purchaseOrderIdSet" type="Set">
+                <parameter name="purchaseOrderId"/>
+            </parameter>
 
-            <parameter name="shipmentItemSourceList" type="List"><parameter name="shipmentItemSource" type="Map"/></parameter>
-            <parameter name="receivingShipmentIdSet" type="Set"><parameter name="receivingShipmentId"/></parameter>
-            <parameter name="shippingShipmentIdSet" type="Set"><parameter name="shippingShipmentId"/></parameter>
+            <parameter name="shipmentItemSourceList" type="List">
+                <parameter name="shipmentItemSource" type="Map"/>
+            </parameter>
+            <parameter name="receivingShipmentIdSet" type="Set">
+                <parameter name="receivingShipmentId"/>
+            </parameter>
+            <parameter name="shippingShipmentIdSet" type="Set">
+                <parameter name="shippingShipmentId"/>
+            </parameter>
 
-            <parameter name="refundPaymentIdSet" type="Set"><parameter name="refundPaymentId"/></parameter>
-            <parameter name="returnItemBillingList" type="List"><parameter name="returnItemBilling" type="Map"/></parameter>
-            <parameter name="creditMemoIdSet" type="Set"><parameter name="invoiceId"/></parameter>
         </out-parameters>
         <actions>
-            <entity-find-one entity-name="beiyelin.testmachine.TestMachineReturnHeader" value-field="TestMachineReturnHeader"/>
-            <if condition="TestMachineReturnHeader == null"><return error="true" message="Return not found with ID ${returnId}"/></if>
+            <entity-find-one entity-name="beiyelin.testmachine.TestMachineReturnHeader"
+                             value-field="TestMachineReturnHeader"/>
+            <if condition="TestMachineReturnHeader == null">
+                <return error="true" message="TestMachineReturn not found with ID ${testMachineReturnId}"/>
+            </if>
 
             <set field="statusId" from="TestMachineReturnHeader.statusId"/>
             <entity-find entity-name="moqui.entity.EntityAuditLog" list="statusHistoryList">
                 <econdition field-name="changedEntityName" value="beiyelin.testmachine.TestMachineReturnHeader"/>
                 <econdition field-name="changedFieldName" value="statusId"/>
-                <econdition field-name="pkPrimaryValue" from="returnId"/>
+                <econdition field-name="pkPrimaryValue" from="testMachineReturnId"/>
             </entity-find>
-            <set field="returnChangeable" from="statusId in ['ReturnCreated', 'ReturnRequested', 'ReturnApproved']"/>
+            <set field="returnChangeable" from="statusId in ['TMROpen', 'TMRConfirmed']"/>
 
             <entity-find entity-name="mantle.party.PartyRole" list="vendorOrgInternalList">
                 <econdition field-name="partyId" from="TestMachineReturnHeader.vendorPartyId"/>
-                <econdition field-name="roleTypeId" value="OrgInternal"/></entity-find>
+                <econdition field-name="roleTypeId" value="OrgInternal"/>
+            </entity-find>
             <!-- if isVendorOrgInternal is a return from customer, otherwise is a return to supplier -->
             <set field="isVendorOrgInternal" from="vendorOrgInternalList as boolean"/>
 
-            <set field="orgPartyId" from="isVendorOrgInternal ? TestMachineReturnHeader.vendorPartyId : TestMachineReturnHeader.customerPartyId"/>
-            <set field="shippingPartyId" from="isVendorOrgInternal ? TestMachineReturnHeader.customerPartyId : TestMachineReturnHeader.vendorPartyId"/>
+            <set field="orgPartyId"
+                 from="isVendorOrgInternal ? TestMachineReturnHeader.vendorPartyId : TestMachineReturnHeader.customerPartyId"/>
+            <set field="shippingPartyId"
+                 from="isVendorOrgInternal ? TestMachineReturnHeader.customerPartyId : TestMachineReturnHeader.vendorPartyId"/>
             <!-- get postalAddressList, telecomNumberList; may only have dest or origin used for order, just get all -->
             <entity-find entity-name="mantle.party.contact.PartyContactMechPostalAddress" list="postalAddressList">
-                <date-filter/><econdition field-name="partyId" from="shippingPartyId"/></entity-find>
+                <date-filter/>
+                <econdition field-name="partyId" from="shippingPartyId"/>
+            </entity-find>
             <entity-find entity-name="mantle.party.contact.PartyContactMechTelecomNumber" list="telecomNumberList">
-                <date-filter/><econdition field-name="partyId" from="shippingPartyId"/></entity-find>
+                <date-filter/>
+                <econdition field-name="partyId" from="shippingPartyId"/>
+            </entity-find>
 
             <set field="salesOrderIdSet" from="new TreeSet()"/>
             <set field="replacementOrderIdSet" from="new TreeSet()"/>
             <set field="purchaseOrderIdSet" from="new TreeSet()"/>
-            <set field="refundPaymentIdSet" from="new TreeSet()"/>
-            <entity-find entity-name="beiyelin.testmachine.ReturnItem" list="returnItemList">
-                <econdition field-name="returnId"/></entity-find>
-            <iterate list="returnItemList" entry="returnItem"><script>
-                if (isVendorOrgInternal) {
-                    if (returnItem.orderId) salesOrderIdSet.add(returnItem.orderId)
-                    if (returnItem.replacementOrderId) replacementOrderIdSet.add(returnItem.replacementOrderId)
-                } else {
-                    if (returnItem.orderId) purchaseOrderIdSet.add(returnItem.orderId)
-                }
-                if (returnItem.refundPaymentId) refundPaymentIdSet.add(returnItem.refundPaymentId)
-            </script></iterate>
+
+            <entity-find entity-name="beiyelin.testmachine.TestMachineReturnItem" list="testMachineReturnItemList">
+                <econdition field-name="testMachineReturnId"/>
+            </entity-find>
+            <iterate list="testMachineReturnItemList" entry="testMachineReturnItem">
+                <script>
+                    if (isVendorOrgInternal) {
+                        if (testMachineReturnItem.testMachineOrderId) salesOrderIdSet.add(testMachineReturnItem.testMachineOrderId)
+                        if (testMachineReturnItem.replacementOrderId) replacementOrderIdSet.add(testMachineReturnItem.replacementOrderId)
+                    } else {
+                        if (testMachineReturnItem.testMachineOrderId) purchaseOrderIdSet.add(testMachineReturnItem.testMachineOrderId)
+                    }
+
+                </script>
+            </iterate>
 
             <set field="receivingShipmentIdSet" from="new TreeSet()"/>
             <set field="shippingShipmentIdSet" from="new TreeSet()"/>
             <entity-find entity-name="mantle.shipment.ShipmentItemSource" list="shipmentItemSourceList">
-                <econdition field-name="returnId"/></entity-find>
-            <iterate list="shipmentItemSourceList" entry="sis"><script>
-                if (isVendorOrgInternal) { receivingShipmentIdSet.add(sis.shipmentId) }
-                else { shippingShipmentIdSet.add(sis.shipmentId)}
-            </script></iterate>
+                <econdition field-name="testMachineReturnId"/>
+            </entity-find>
+            <iterate list="shipmentItemSourceList" entry="sis">
+                <script>
+                    if (isVendorOrgInternal) {
+                        receivingShipmentIdSet.add(sis.shipmentId)
+                    } else {
+                        shippingShipmentIdSet.add(sis.shipmentId)
+                    }
+                </script>
+            </iterate>
 
-            <entity-find entity-name="beiyelin.testmachine.ReturnItemBilling" list="returnItemBillingList">
-                <econdition field-name="returnId"/><order-by field-name="returnItemSeqId"/></entity-find>
-            <set field="creditMemoIdSet" from="new TreeSet(returnItemBillingList*.invoiceId)"/>
+
         </actions>
     </service>
 
     <!-- ============================================ -->
-    <!-- ========== Create Return Services ========== -->
+    <!-- ========== Create TestMachineReturn Services ========== -->
     <!-- ============================================ -->
 
-    <service verb="create" noun="Return">
+    <service verb="create" noun="TestMachineReturn">
         <in-parameters>
             <auto-parameters entity-name="beiyelin.testmachine.TestMachineReturnHeader" include="nonpk">
-                <exclude field-name="visitId"/></auto-parameters>
+                <exclude field-name="visitId"/>
+            </auto-parameters>
             <parameter name="vendorPartyId" required="true"/>
             <parameter name="customerPartyId" required="true"/>
-            <parameter name="statusId" default-value="ReturnCreated"/>
+            <parameter name="statusId" default-value="TMROpen"/>
             <parameter name="entryDate" type="Timestamp" default="ec.user.nowTimestamp"/>
         </in-parameters>
-        <out-parameters><parameter name="returnId"/></out-parameters>
+        <out-parameters>
+            <parameter name="testMachineReturnId"/>
+        </out-parameters>
         <actions>
-            <set field="visitId" from="ec.user.visitId"/>
-            <service-call name="create#beiyelin.testmachine.TestMachineReturnHeader" in-map="context" out-map="context"/>
+            <service-call name="create#beiyelin.testmachine.TestMachineReturnHeader" in-map="context"
+                          out-map="context"/>
         </actions>
     </service>
-    <service verb="create" noun="ReturnFromOrder">
+    <service verb="create" noun="TestMachineReturnFromTestMachineOrder">
         <in-parameters>
-            <parameter name="orderId" required="true"/>
-            <parameter name="orderPartSeqId" required="true"/>
+            <parameter name="testMachineOrderId" required="true"/>
+
             <auto-parameters entity-name="beiyelin.testmachine.TestMachineReturnHeader" include="nonpk">
-                <exclude field-name="statusId"/><exclude field-name="customerPartyId"/><exclude field-name="vendorPartyId"/>
-                <exclude field-name="entryDate"/><exclude field-name="currencyUomId"/><exclude field-name="visitId"/></auto-parameters>
-            <parameter name="statusId" default-value="ReturnCreated"/>
+                <exclude field-name="statusId"/>
+                <exclude field-name="customerPartyId"/>
+                <exclude field-name="customerFacilityId"/>
+                <exclude field-name="vendorPartyId"/>
+                <exclude field-name="vendorFacilityId"/>
+                <exclude field-name="entryDate"/>
+                <exclude field-name="currencyUomId"/>
+            </auto-parameters>
+            <parameter name="statusId" default-value="TMROpen"/>
             <parameter name="entryDate" type="Timestamp" default="ec.user.nowTimestamp"/>
         </in-parameters>
-        <out-parameters><parameter name="returnId"/></out-parameters>
+        <out-parameters>
+            <parameter name="testMachineReturnId"/>
+        </out-parameters>
         <actions>
-            <entity-find-one entity-name="mantle.order.OrderHeader" value-field="orderHeader"/>
-            <entity-find-one entity-name="mantle.order.OrderPart" value-field="orderPart"/>
-            <if condition="!orderPart"><return error="true" message="Could not find Order Part [${orderId}:${orderPartSeqId}]"/></if>
+            <entity-find-one entity-name="beiyelin.testmachine.TestMachineOrderHeader" value-field="testMachineOrderHeader"/>
+
             <!-- Ideally order should be completed, but allow Approved and Sent for partially fulfilled orders,
                 will check actual fulfillment when adding items -->
-            <if condition="!(orderPart.statusId in ['OrderApproved', 'OrderSent', 'OrderCompleted'])">
-                <return error="true" message="Order in status ${orderPart.statusId} cannot be returned"/></if>
-
-            <set field="customerPartyId" from="orderPart.customerPartyId"/>
-            <set field="vendorPartyId" from="orderPart.vendorPartyId"/>
-            <set field="currencyUomId" from="orderHeader.currencyUomId"/>
-
-            <if condition="!facilityId"><set field="facilityId" from="orderPart.facilityId"/></if>
-
-            <!-- Only set postalContactMechId, telecomContactMechId if vendor is internal org, ie if it is Sales Order they are the customer's -->
-            <entity-find entity-name="mantle.party.PartyRole" list="vendorOrgInternalList">
-                <econdition field-name="partyId" from="vendorPartyId"/>
-                <econdition field-name="roleTypeId" value="OrgInternal"/></entity-find>
-            <if condition="vendorOrgInternalList">
-                <if condition="!postalContactMechId"><set field="postalContactMechId" from="orderPart.postalContactMechId"/></if>
-                <if condition="!telecomContactMechId"><set field="telecomContactMechId" from="orderPart.telecomContactMechId"/></if>
+            <if condition="!(testMachineOrderHeader.statusId in ['TMOHPlaced', 'TMOHCompleted'])">
+                <return error="true" message="TestMachineOrder in status ${testMachineOrderHeader.statusId} cannot be returned"/>
             </if>
 
-            <if condition="!shipmentMethodEnumId"><set field="shipmentMethodEnumId" from="orderPart.shipmentMethodEnumId"/></if>
-            <if condition="!carrierPartyId"><set field="carrierPartyId" from="orderPart.carrierPartyId"/></if>
-            <if condition="!paymentMethodId">
-                <entity-find entity-name="mantle.account.payment.Payment" list="paymentList">
-                    <econdition field-name="orderId"/><econdition field-name="orderPartSeqId"/></entity-find>
-                <iterate list="paymentList" entry="payment"><if condition="payment.paymentMethodId">
-                    <set field="paymentMethodId" from="payment.paymentMethodId"/></if></iterate>
-            </if>
+            <set field="customerPartyId" from="testMachineOrderHeader.vendorPartyId"/>
+            <set field="customerFacilityId" from="testMachineOrderHeader.vendorFacilityId"/>
 
-            <set field="visitId" from="ec.user.visitId"/>
-            <service-call name="create#beiyelin.testmachine.TestMachineReturnHeader" in-map="context" out-map="context"/>
+            <set field="vendorPartyId" from="testMachineOrderHeader.customerPartyId"/>
+            <set field="vendorFacilityId" from="testMachineOrderHeader.customerFacilityId"/>
+
+            <set field="currencyUomId" from="testMachineOrderHeader.currencyUomId"/>
+
+            <service-call name="create#beiyelin.testmachine.TestMachineReturnHeader" in-map="context"
+                          out-map="context"/>
         </actions>
     </service>
 
-    <service verb="find" noun="OrderOpenReturns">
-        <in-parameters><parameter name="orderId" required="true"/><parameter name="orderPartSeqId" required="true"/></in-parameters>
-        <out-parameters><parameter name="openReturnList" type="List"><parameter name="testMachineReturnHeader" type="Map"/></parameter></out-parameters>
+    <service verb="find" noun="TestMachineOrderOpenTestMachineReturns">
+        <in-parameters>
+            <parameter name="testMachineOrderId" required="true"/>
+        </in-parameters>
+        <out-parameters>
+            <parameter name="openTestMachineReturnList" type="List">
+                <parameter name="testMachineReturnHeader" type="Map"/>
+            </parameter>
+        </out-parameters>
         <actions>
-            <entity-find-one entity-name="mantle.order.OrderPart" value-field="orderPart"/>
-            <entity-find entity-name="beiyelin.testmachine.TestMachineReturnHeader" list="openReturnList">
-                <econdition field-name="customerPartyId" from="orderPart.customerPartyId"/>
-                <econdition field-name="vendorPartyId" from="orderPart.vendorPartyId"/>
-                <econdition field-name="statusId" operator="in" value="ReturnCreated,ReturnRequested"/>
+            <entity-find-one entity-name="beiyelin.testmachine.TestMachineOrderHeader" value-field="testMachineOrderHeader"/>
+            <entity-find entity-name="beiyelin.testmachine.TestMachineReturnHeader" list="openTestMachineReturnList">
+                <econdition field-name="vendorPartyId" from="testMachineOrderHeader.customerPartyId"/>
+                <econdition field-name="customerPartyId" from="testMachineOrderHeader.vendorPartyId"/>
+                <econdition field-name="statusId" operator="in" value="TMROpen,TMRConfirmed"/>
             </entity-find>
         </actions>
     </service>
-    <service verb="find" noun="ReturnableOrderItems">
+    <service verb="find" noun="ReturnableTestMachineOrderItems">
         <in-parameters>
-            <parameter name="returnId" required="true"/>
+            <parameter name="testMachineReturnId" required="true"/>
             <parameter name="lookBackDays" type="Integer" default="30"/>
         </in-parameters>
         <out-parameters>
-            <parameter name="orderItemInfoList" type="List"><parameter name="orderItemInfo" type="Map">
-                <parameter name="orderId"/>
-                <parameter name="orderItemSeqId"/>
-                <parameter name="itemTypeEnumId"/>
-                <parameter name="isProductItemType" type="Boolean"/>
-                <parameter name="productId"/>
+            <parameter name="testMachineOrderItemInfoList" type="List">
+                <parameter name="testMachineOrderItemInfo" type="Map">
+                    <parameter name="testMachineOrderId"/>
+                    <parameter name="testMachineOrderItemSeqId"/>
 
-                <parameter name="invoiceQuantity" type="BigDecimal"/>
-                <parameter name="returnedQuantity" type="BigDecimal"/>
-                <parameter name="returnableQuantity" type="BigDecimal"/>
+                    <parameter name="productId"/>
 
-                <parameter name="invoiceTotal" type="BigDecimal"/>
-                <parameter name="returnedTotal" type="BigDecimal"/>
-                <parameter name="returnableTotal" type="BigDecimal"/>
-            </parameter></parameter>
+                    <parameter name="invoiceQuantity" type="BigDecimal"/>
+                    <parameter name="returnedQuantity" type="BigDecimal"/>
+                    <parameter name="returnableQuantity" type="BigDecimal"/>
+
+                    <parameter name="invoiceTotal" type="BigDecimal"/>
+                    <parameter name="returnedTotal" type="BigDecimal"/>
+                    <parameter name="returnableTotal" type="BigDecimal"/>
+                </parameter>
+            </parameter>
         </out-parameters>
         <actions>
-            <entity-find-one entity-name="beiyelin.testmachine.TestMachineReturnHeader" value-field="TestMachineReturnHeader"/>
+            <entity-find-one entity-name="beiyelin.testmachine.TestMachineReturnHeader"
+                             value-field="TestMachineReturnHeader"/>
             <script>
                 Calendar lookBackCal = ec.user.nowCalendar
                 lookBackCal.add(Calendar.DAY_OF_MONTH, -lookBackDays)
                 lookBackTs = new java.sql.Timestamp(lookBackCal.getTimeInMillis())
             </script>
 
-            <entity-find entity-name="moqui.basic.EnumGroupMember" list="productItemTypeEgms" cache="true">
-                <econdition field-name="enumGroupEnumId" value="EngItemsProduct"/></entity-find>
-            <set field="productItemTypes" from="productItemTypeEgms*.enumId"/>
 
             <!-- Match customerPartyId, vendorPartyId (to OrderPart), include (invoiced items (physical shipped or not); shipped items/quantities), exclude returned -->
             <entity-find entity-name="beiyelin.testmachine.ReturnableOrderItemView" list="returnableItems">
                 <econdition field-name="customerPartyId" from="TestMachineReturnHeader.customerPartyId"/>
                 <econdition field-name="vendorPartyId" from="TestMachineReturnHeader.vendorPartyId"/>
                 <econdition field-name="placedDate" operator="greater-equals" from="lookBackTs"/>
-                <select-field field-name="orderId,orderItemSeqId,itemTypeEnumId,productId,quantity,invoiceQuantity,invoiceAmount"/>
-                <order-by field-name="orderId,orderItemSeqId"/>
+                <select-field
+                        field-name="testMachineOrderId,testMachineOrderItemSeqId,productId,quantity,invoiceQuantity,invoiceAmount"/>
+                <order-by field-name="testMachineOrderId,testMachineOrderItemSeqId"/>
             </entity-find>
 
-            <set field="orderItemInfoList" from="[]"/>
+            <set field="testMachineOrderItemInfoList" from="[]"/>
             <iterate list="returnableItems" entry="item">
-                <if condition="item.invoiceQuantity == 0.0"><continue/></if>
+                <if condition="item.invoiceQuantity == 0.0">
+                    <continue/>
+                </if>
 
-                <set field="isProductItemType" from="item.itemTypeEnumId in productItemTypes"/>
-
-                <entity-find-one entity-name="mantle.product.Product" value-field="product" cache="true">
-                    <field-map field-name="productId" from="item.productId"/></entity-find-one>
-                <set field="isShippable" from="isProductItemType &amp;&amp; product != null ? product.productTypeEnumId in ['PtAsset', 'PtDigitalAsset', 'PtAssetUse', 'PtPickAssembly'] : false"/>
 
                 <set field="returnedQuantity" from="0.0"/>
                 <set field="returnedTotal" from="0.0"/>
                 <entity-find entity-name="beiyelin.testmachine.ReturnItemQuantity" list="riqList">
-                    <econdition field-name="orderId" from="item.orderId"/>
-                    <econdition field-name="orderItemSeqId" from="item.orderItemSeqId"/>
-                    <econdition field-name="statusId" operator="not-equals" value="ReturnCancelled"/>
+                    <econdition field-name="testMachineOrderId" from="item.testMachineOrderId"/>
+                    <econdition field-name="testMachineOrderItemSeqId" from="item.testMachineOrderItemSeqId"/>
+                    <econdition field-name="statusId" operator="not-equals" value="TMRCancelled"/>
                     <select-field field-name="returnQuantity,responseAmount"/>
                 </entity-find>
                 <iterate list="riqList" entry="riq">
                     <set field="retQuantity" from="riq.returnQuantity != null ? riq.returnQuantity : 1.0"/>
                     <set field="returnedQuantity" from="returnedQuantity + retQuantity"/>
-                    <set field="returnedTotal" from="returnedTotal + (retQuantity * (riq.responseAmount ?: 0.0)).setScale(2, BigDecimal.ROUND_HALF_UP)"/>
+                    <set field="returnedTotal"
+                         from="returnedTotal + (retQuantity * (riq.responseAmount ?: 0.0)).setScale(2, BigDecimal.ROUND_HALF_UP)"/>
                 </iterate>
 
                 <set field="invoiceQuantity" from="item.invoiceQuantity != null ? item.invoiceQuantity : 1.0"/>
                 <set field="returnableQuantity" from="invoiceQuantity - returnedQuantity"/>
 
-                <set field="invoiceTotal" from="(invoiceQuantity * (item.invoiceAmount ?: 0.0)).setScale(2, BigDecimal.ROUND_HALF_UP)"/>
+                <set field="invoiceTotal"
+                     from="(invoiceQuantity * (item.invoiceAmount ?: 0.0)).setScale(2, BigDecimal.ROUND_HALF_UP)"/>
                 <set field="returnableTotal" from="invoiceTotal - returnedTotal"/>
 
                 <if condition="returnableQuantity &gt; 0.0 || (!isProductItemType &amp;&amp; returnableTotal &gt; 0.0)">
-                    <script>orderItemInfoList.add([orderId:item.orderId, orderItemSeqId:item.orderItemSeqId,
-                            itemTypeEnumId:item.itemTypeEnumId, isProductItemType:isProductItemType, isShippable:isShippable,
-                            productId:item.productId, invoiceQuantity:invoiceQuantity, invoiceTotal:invoiceTotal,
-                            returnedQuantity:returnedQuantity, returnableQuantity:returnableQuantity,
-                            returnedTotal:returnedTotal, returnableTotal:returnableTotal])</script>
+                    <script>testMachineOrderItemInfoList.add([testMachineOrderId: item.testMachineOrderId, testMachineOrderItemSeqId: item.testMachineOrderItemSeqId,
+                                                   productId         : item.productId, invoiceQuantity: invoiceQuantity, invoiceTotal: invoiceTotal,
+                                                   returnedQuantity  : returnedQuantity, returnableQuantity: returnableQuantity,
+                                                   returnedTotal     : returnedTotal, returnableTotal: returnableTotal])</script>
                 </if>
             </iterate>
         </actions>
     </service>
 
-    <service verb="calculate" noun="OrderItemReturnable" authz-action="view">
-        <description>Calculate returnable quantity for an OrderItem with pre-queried OrderItemBilling and ReturnItem
-            lists, which can be lists for an entire order (ie filtered before calc) and if are null are queried here.</description>
+    <service verb="calculate" noun="TestMachineOrderItemReturnable" authz-action="view">
+        <description>Calculate returnable quantity for an OrderItem with pre-queried OrderItemBilling and TestMachineReturnItem
+            lists, which can be lists for an entire order (ie filtered before calc) and if are null are queried here.
+        </description>
         <in-parameters>
-            <parameter name="orderId" required="true"/>
-            <parameter name="orderItemSeqId" required="true"/>
-            <parameter name="orderItem" type="Map"/>
-            <parameter name="orderItemBillingList" type="List"><parameter name="oib" type="Map"/></parameter>
-            <parameter name="returnItemList" type="List"><parameter name="returnItem" type="Map"/></parameter>
+            <parameter name="testMachineOrderId" required="true"/>
+            <parameter name="testMachineOrderItemSeqId" required="true"/>
+            <parameter name="testMachineOrderItem" type="Map"/>
+            <parameter name="testMachineReturnItemList" type="List">
+                <parameter name="testMachineReturnItem" type="Map"/>
+            </parameter>
         </in-parameters>
         <out-parameters>
             <parameter name="isProductItemType" type="Boolean"/>
@@ -285,71 +324,66 @@ along with this software (see the LICENSE.md file). If not, see
             <parameter name="returnableTotal" type="BigDecimal"/>
         </out-parameters>
         <actions>
-            <if condition="orderItem == null"><entity-find-one entity-name="mantle.order.OrderItem" value-field="orderItem"/></if>
-            <if condition="orderItem == null"><return error="true" message="Could not find Order Item ${orderId}:${orderItemSeqId}"/></if>
+            <if condition="testMachineOrderItem == null">
+                <entity-find-one entity-name="beiyelin.testmachine.TestMachineOrderItem"
+                                 value-field="testMachineOrderItem"/>
+            </if>
+            <if condition="testMachineOrderItem == null">
+                <return error="true"
+                        message="Could not find TestMachineOrder Item ${testMachineOrderId}:${testMachineOrderItemSeqId}"/>
+            </if>
 
-            <set field="orderQuantity" from="orderItem.quantity != null ? orderItem.quantity : 1.0"/>
-            <set field="orderTotal" from="(orderQuantity * (orderItem.unitAmount ?: 0.0)).setScale(2, BigDecimal.ROUND_HALF_UP)"/>
+            <set field="orderQuantity"
+                 from="testMachineOrderItem.quantity != null ? testMachineOrderItem.quantity : 1.0"/>
+            <set field="orderTotal"
+                 from="(orderQuantity * (testMachineOrderItem.unitPrice ?: 0.0)).setScale(2, BigDecimal.ROUND_HALF_UP)"/>
 
-            <entity-find entity-name="moqui.basic.EnumGroupMember" list="productItemTypeEgms" cache="true">
-                <econdition field-name="enumGroupEnumId" value="EngItemsProduct"/></entity-find>
-            <set field="productItemTypes" from="productItemTypeEgms*.enumId"/>
-            <set field="isProductItemType" from="orderItem.itemTypeEnumId in productItemTypes"/>
 
             <set field="invoiceQuantity" from="0"/>
             <set field="invoiceTotal" from="0.0"/>
-            <if condition="orderItemBillingList == null">
-                <entity-find entity-name="mantle.order.OrderItemBilling" list="orderItemBillingList">
-                    <econdition field-name="orderId"/><econdition field-name="orderItemSeqId"/></entity-find>
-            </if>
-            <iterate list="orderItemBillingList" entry="oib">
-                <!-- check for when orderItemBillingList is passed in -->
-                <if condition="oib.orderId != orderId || oib.orderItemSeqId != orderItemSeqId"><continue/></if>
-                <if condition="oib.quantity == 0.0"><continue/></if>
 
-                <set field="invQuantity" from="oib.quantity != null ? oib.quantity : 1.0"/>
-                <set field="invoiceQuantity" from="invoiceQuantity + invQuantity"/>
-
-                <entity-find-one entity-name="mantle.account.invoice.InvoiceItem" value-field="invoiceItem">
-                    <field-map field-name="invoiceId" from="oib.invoiceId"/>
-                    <field-map field-name="invoiceItemSeqId" from="oib.invoiceItemSeqId"/>
-                </entity-find-one>
-                <set field="invoiceTotal" from="invoiceTotal + (invQuantity * (invoiceItem?.amount ?: 0.0)).setScale(2, BigDecimal.ROUND_HALF_UP)"/>
-            </iterate>
 
             <set field="returnedQuantity" from="0.0"/>
             <set field="returnedTotal" from="0.0"/>
-            <if condition="returnItemList == null">
-                <entity-find entity-name="beiyelin.testmachine.ReturnItem" list="returnItemList">
-                    <econdition field-name="orderId"/><econdition field-name="orderItemSeqId"/>
-                    <econdition field-name="statusId" operator="not-equals" value="ReturnCancelled"/>
-                    <order-by field-name="orderItemSeqId"/>
+            <if condition="testMachineReturnItemList == null">
+                <entity-find entity-name="beiyelin.testmachine.TestMachineReturnItem" list="testMachineReturnItemList">
+                    <econdition field-name="testMachineOrderId"/>
+                    <econdition field-name="testMachineOrderItemSeqId"/>
+<!--                    <econdition field-name="statusId" operator="not-equals" value="ReturnCancelled"/>-->
+                    <order-by field-name="testMachineOrderItemSeqId"/>
                 </entity-find>
             </if>
-            <iterate list="returnItemList" entry="returnItem">
-                <!-- check for when orderItemBillingList is passed in -->
-                <if condition="returnItem.orderId != orderId || returnItem.orderItemSeqId != orderItemSeqId"><continue/></if>
+            <iterate list="testMachineReturnItemList" entry="testMachineReturnItem">
 
-                <set field="retQuantity" from="returnItem.returnQuantity != null ? returnItem.returnQuantity : 1.0"/>
+                <if condition="testMachineReturnItem.testMachineOrderId != testMachineOrderId || testMachineReturnItem.testMachineOrderItemSeqId != testMachineOrderItemSeqId">
+                    <continue/>
+                </if>
+
+                <set field="retQuantity" from="testMachineReturnItem.returnQuantity != null ? testMachineReturnItem.returnQuantity : 1.0"/>
                 <set field="returnedQuantity" from="returnedQuantity + retQuantity"/>
-                <set field="returnedTotal" from="returnedTotal + (returnItem.responseAmount != null ? returnItem.responseAmount :
-                        (retQuantity * (returnItem.returnPrice ?: orderItem.unitAmount ?: 0.0)).setScale(2, BigDecimal.ROUND_HALF_UP))"/>
+                <set field="returnedTotal" from="returnedTotal + (testMachineReturnItem.responseAmount != null ? testMachineReturnItem.responseAmount :
+                        (retQuantity * (testMachineReturnItem.returnPrice ?: testMachineOrderItem.unitPrice ?: 0.0)).setScale(2, BigDecimal.ROUND_HALF_UP))"/>
             </iterate>
 
             <set field="returnableQuantity" from="invoiceQuantity - returnedQuantity"/>
             <set field="returnableTotal" from="invoiceTotal - returnedTotal"/>
         </actions>
     </service>
-    <service verb="add" noun="OrderItemToReturn">
+    <service verb="add" noun="TestMachineOrderItemToTestMachineReturn">
         <in-parameters>
-            <parameter name="returnId" required="true"/>
-            <parameter name="orderId" required="true"/>
-            <parameter name="orderItemSeqId" required="true"/>
-            <auto-parameters entity-name="beiyelin.testmachine.ReturnItem" include="nonpk">
-                <exclude field-name="statusId"/><exclude field-name="itemTypeEnumId"/><exclude field-name="productId"/>
-                <exclude field-name="returnQuantity"/><exclude field-name="receivedQuantity"/>
-                <exclude field-name="replacementOrderId"/><exclude field-name="refundPaymentId"/><exclude field-name="finAccountTransId"/>
-                <exclude field-name="responseDate"/></auto-parameters>
+            <parameter name="testMachineReturnId" required="true"/>
+            <parameter name="testMachineOrderId" required="true"/>
+            <parameter name="testMachineOrderItemSeqId" required="true"/>
+            <auto-parameters entity-name="beiyelin.testmachine.TestMachineReturnItem" include="nonpk">
+                <exclude field-name="statusId"/>
+                 <exclude field-name="productId"/>
+                <exclude field-name="returnQuantity"/>
+                <exclude field-name="receivedQuantity"/>
+                <exclude field-name="replacementOrderId"/>
+                <exclude field-name="refundPaymentId"/>
+                <exclude field-name="finAccountTransId"/>
+                <exclude field-name="responseDate"/>
+            </auto-parameters>
             <parameter name="statusId"/>
             <parameter name="returnQuantity" type="BigDecimal" required="true"/>
             <parameter name="returnReasonEnumId" required="true"/>
@@ -357,87 +391,131 @@ along with this software (see the LICENSE.md file). If not, see
             <parameter name="responseImmediate" default-value="N"/>
             <parameter name="allowAnyAmount" type="Boolean" default="false"/>
         </in-parameters>
-        <out-parameters><parameter name="returnItemSeqId"/></out-parameters>
+        <out-parameters>
+            <parameter name="testMachineReturnItemSeqId"/>
+        </out-parameters>
         <actions>
-            <entity-find-one entity-name="beiyelin.testmachine.TestMachineReturnHeader" value-field="TestMachineReturnHeader"/>
+            <entity-find-one entity-name="beiyelin.testmachine.TestMachineReturnHeader"
+                             value-field="TestMachineReturnHeader"/>
             <if condition="TestMachineReturnHeader.statusId in ['ReturnCancelled', 'ReturnCompleted', 'ReturnManResp']">
-                <return error="true" message="Cannot add items to return in status ${TestMachineReturnHeader.status?.description}"/></if>
+                <return error="true"
+                        message="Cannot add items to return in status ${TestMachineReturnHeader.status?.description}"/>
+            </if>
 
-            <entity-find-one entity-name="mantle.order.OrderItem" value-field="orderItem"/>
-            <if condition="orderItem == null"><return error="true" message="Could not find Order Item ${orderId}:${orderItemSeqId}"/></if>
+            <entity-find-one entity-name="beiyelin.testmachine.TestMachineOrderItem"
+                             value-field="testMachineOrderItem"/>
+            <if condition="testMachineOrderItem == null">
+                <return error="true"
+                        message="Could not find TestMachineOrder Item ${testMachineOrderId}:${testMachineOrderItemSeqId}"/>
+            </if>
 
-            <service-call name="beiyelin.testmachineServices.calculate#OrderItemReturnable" in-map="context" out-map="context"/>
-            <set field="returnPrice" from="returnPrice ?: orderItem.unitAmount ?: 0.0"/>
+            <service-call name="beiyelin.testmachine.TestMachineReturnServices.calculate#TestMachineOrderItemReturnable" in-map="context"
+                          out-map="context"/>
+            <set field="returnPrice" from="returnPrice ?: testMachineOrderItem.unitPrice ?: 0.0"/>
             <set field="returnTotal" from="responseAmount != null ? responseAmount :
                     ((returnQuantity != null ? returnQuantity : 1.0) * returnPrice).setScale(2, BigDecimal.ROUND_HALF_UP)"/>
 
-            <if condition="isProductItemType"><then>
-                <!-- make sure returnQuantity + returnedQuantity is not greater than invoiceQuantity -->
-                <if condition="(returnedQuantity + returnQuantity) &gt; invoiceQuantity">
-                    <return error="true" message="Tried to return more than is returnable; quantity billed ${invoiceQuantity}, already returned ${returnedQuantity}, tried to return ${returnQuantity}"/></if>
-            </then><else>
-                <!-- make sure returnTotal + returnedTotal is not greater than invoiceTotal -->
-                <if condition="(returnedTotal + returnTotal) &gt; invoiceTotal">
-                    <if condition="allowAnyAmount"><then>
-                        <log level="warn" message="Adding item to return with total more than is returnable for non-product item; total billed ${ec.l10n.format(invoiceTotal, '#,##0.00')}, already returned ${ec.l10n.format(returnedTotal, '#,##0.00')} for Order Item ${orderId}:${orderItemSeqId}, return total ${ec.l10n.format(returnTotal, '#,##0.00')} on Return ${returnId}"/>
-                    </then><else>
-                        <return error="true" message="Tried to return total more than is returnable for non-product item; total billed ${ec.l10n.format(invoiceTotal, '#,##0.00')}, already returned ${ec.l10n.format(returnedTotal, '#,##0.00')} for Order Item ${orderId}:${orderItemSeqId}, tried to return ${ec.l10n.format(returnTotal, '#,##0.00')} on Return ${returnId}"/>
-                    </else></if>
-                </if>
-            </else></if>
+            <if condition="isProductItemType">
+                <then>
+                    <!-- make sure returnQuantity + returnedQuantity is not greater than invoiceQuantity -->
+                    <if condition="(returnedQuantity + returnQuantity) &gt; invoiceQuantity">
+                        <return error="true"
+                                message="Tried to return more than is returnable; quantity billed ${invoiceQuantity}, already returned ${returnedQuantity}, tried to return ${returnQuantity}"/>
+                    </if>
+                </then>
+                <else>
+                    <!-- make sure returnTotal + returnedTotal is not greater than invoiceTotal -->
+                    <if condition="(returnedTotal + returnTotal) &gt; invoiceTotal">
+                        <if condition="allowAnyAmount">
+                            <then>
+                                <log level="warn"
+                                     message="Adding item to return with total more than is returnable for non-product item; total billed ${ec.l10n.format(invoiceTotal, '#,##0.00')}, already returned ${ec.l10n.format(returnedTotal, '#,##0.00')} for TestMachineOrder Item ${testMachineOrderId}:${testMachineOrderItemSeqId}, return total ${ec.l10n.format(returnTotal, '#,##0.00')} on TestMachineReturn ${testMachineReturnId}"/>
+                            </then>
+                            <else>
+                                <return error="true"
+                                        message="Tried to return total more than is returnable for non-product item; total billed ${ec.l10n.format(invoiceTotal, '#,##0.00')}, already returned ${ec.l10n.format(returnedTotal, '#,##0.00')} for TestMachineOrder Item ${testMachineOrderId}:${testMachineOrderItemSeqId}, tried to return ${ec.l10n.format(returnTotal, '#,##0.00')} on TestMachineReturn ${testMachineReturnId}"/>
+                            </else>
+                        </if>
+                    </if>
+                </else>
+            </if>
 
-            <if condition="!statusId"><set field="statusId" from="TestMachineReturnHeader.statusId"/></if>
+            <if condition="!statusId">
+                <set field="statusId" from="TestMachineReturnHeader.statusId"/>
+            </if>
             <if condition="statusId in ['ReturnShipped', 'ReturnReceived']">
-                <set field="statusId" value="ReturnApproved"/></if>
+                <set field="statusId" value="ReturnApproved"/>
+            </if>
 
-            <!-- set some general fields, create the ReturnItem -->
-            <set field="itemTypeEnumId" from="orderItem.itemTypeEnumId"/>
-            <set field="productId" from="orderItem.productId"/>
-            <if condition="!description"><set field="description" from="orderItem.itemDescription"/></if>
-            <service-call name="create#beiyelin.testmachine.ReturnItem" in-map="context" out-map="context"/>
+            <!-- set some general fields, create the TestMachineReturnItem -->
+            <set field="productId" from="testMachineOrderItem.productId"/>
+            <if condition="!description">
+                <set field="description" from="testMachineOrderItem.itemDescription"/>
+            </if>
+            <service-call name="create#beiyelin.testmachine.TestMachineReturnItem" in-map="context" out-map="context"/>
 
             <!-- =========== from here down handling of child items, skip for replace response since no refund/credit/etc -->
-            <if condition="returnResponseEnumId == 'RrspReplace'"><return/></if>
+            <if condition="returnResponseEnumId == 'RrspReplace'">
+                <return/>
+            </if>
 
             <!-- create prorated return items for non-product order child items -->
             <!-- do this even if current item is a non-product item to handle things like tax on shipping -->
-            <set field="childOrderItemList" from="orderItem.'Child#mantle.order.OrderItem'"/>
-            <order-map-list list="childOrderItemList"><order-by field-name="orderItemSeqId"/></order-map-list>
+            <set field="childOrderItemList"
+                 from="testMachineOrderItem.'Child#beiyelin.testmachine.TestMachineOrderItem'"/>
+            <order-map-list list="childOrderItemList">
+                <order-by field-name="testMachineOrderItemSeqId"/>
+            </order-map-list>
 
             <iterate list="childOrderItemList" entry="childOrderItem">
-                <service-call name="beiyelin.testmachineServices.calculate#OrderItemReturnable" out-map="childOut"
-                        in-map="[orderId:childOrderItem.orderId, orderItemSeqId:childOrderItem.orderItemSeqId, orderItem:childOrderItem]"/>
+                <service-call name="beiyelin.testmachine.TestMachineReturnServices.calculate#TestMachineOrderItemReturnable" out-map="childOut"
+                              in-map="[testMachineOrderId:childOrderItem.testMachineOrderId, testMachineOrderItemSeqId:childOrderItem.testMachineOrderItemSeqId, testMachineOrderItem:childOrderItem]"/>
                 <!-- only add child to return if not a product item -->
-                <if condition="childOut.isProductItemType"><continue/></if>
+                <if condition="childOut.isProductItemType">
+                    <continue/>
+                </if>
 
                 <!-- if parent is a product item prorate on quantity, otherwise prorate on total amount -->
                 <!-- NOTE what if OrderItem not fully invoiced? for that reason prorate based on invoice values -->
                 <set field="childRetAmount" from="0.0"/>
-                <if condition="isProductItemType"><then>
-                    <if condition="returnQuantity &gt;= (invoiceQuantity - returnedQuantity)"><then>
-                        <!-- all returned, use remaining child item amount -->
-                        <set field="childRetAmount" from="childOut.returnableTotal"/>
-                    </then><else>
-                        <set field="parentRatio" from="(returnQuantity as BigDecimal).divide(invoiceQuantity as BigDecimal, 6, BigDecimal.ROUND_HALF_UP)"/>
-                        <set field="childRetAmount" from="(childOut.invoiceTotal * parentRatio).setScale(2, BigDecimal.ROUND_HALF_UP)"/>
-                    </else></if>
-                </then><else>
-                    <!-- NOTE that quantities should always be positive but amounts are negative for discounts so totals may be negative -->
-                    <if condition="returnTotal.abs() &gt;= (invoiceTotal - returnedTotal).abs()"><then>
-                        <!-- all returned, use remaining child item amount -->
-                        <set field="childRetAmount" from="childOut.returnableTotal"/>
-                    </then><else>
-                        <set field="parentRatio" from="(returnTotal as BigDecimal).divide(invoiceTotal as BigDecimal, 6, BigDecimal.ROUND_HALF_UP).abs()"/>
-                        <set field="childRetAmount" from="(childOut.invoiceTotal * parentRatio).setScale(2, BigDecimal.ROUND_HALF_UP)"/>
-                    </else></if>
-                </else></if>
+                <if condition="isProductItemType">
+                    <then>
+                        <if condition="returnQuantity &gt;= (invoiceQuantity - returnedQuantity)">
+                            <then>
+                                <!-- all returned, use remaining child item amount -->
+                                <set field="childRetAmount" from="childOut.returnableTotal"/>
+                            </then>
+                            <else>
+                                <set field="parentRatio"
+                                     from="(returnQuantity as BigDecimal).divide(invoiceQuantity as BigDecimal, 6, BigDecimal.ROUND_HALF_UP)"/>
+                                <set field="childRetAmount"
+                                     from="(childOut.invoiceTotal * parentRatio).setScale(2, BigDecimal.ROUND_HALF_UP)"/>
+                            </else>
+                        </if>
+                    </then>
+                    <else>
+                        <!-- NOTE that quantities should always be positive but amounts are negative for discounts so totals may be negative -->
+                        <if condition="returnTotal.abs() &gt;= (invoiceTotal - returnedTotal).abs()">
+                            <then>
+                                <!-- all returned, use remaining child item amount -->
+                                <set field="childRetAmount" from="childOut.returnableTotal"/>
+                            </then>
+                            <else>
+                                <set field="parentRatio"
+                                     from="(returnTotal as BigDecimal).divide(invoiceTotal as BigDecimal, 6, BigDecimal.ROUND_HALF_UP).abs()"/>
+                                <set field="childRetAmount"
+                                     from="(childOut.invoiceTotal * parentRatio).setScale(2, BigDecimal.ROUND_HALF_UP)"/>
+                            </else>
+                        </if>
+                    </else>
+                </if>
 
-                <!-- if there is a child item return amount (negative or positive) create a ReturnItem for it -->
+                <!-- if there is a child item return amount (negative or positive) create a TestMachineReturnItem for it -->
                 <if condition="childRetAmount != 0.0">
-                    <service-call name="create#beiyelin.testmachine.ReturnItem" in-map="[returnId:returnId, parentItemSeqId:returnItemSeqId,
+                    <service-call name="create#beiyelin.testmachine.TestMachineReturnItem" in-map="[testMachineReturnId:testMachineReturnId, parentItemSeqId:testMachineReturnItemSeqId,
                             statusId:statusId, returnReasonEnumId:returnReasonEnumId, returnResponseEnumId:returnResponseEnumId,
-                            responseImmediate:responseImmediate, orderId:childOrderItem.orderId, orderItemSeqId:childOrderItem.orderItemSeqId,
-                            itemTypeEnumId:childOrderItem.itemTypeEnumId, description:childOrderItem.itemDescription,
+                            responseImmediate:responseImmediate, testMachineOrderId:childOrderItem.testMachineOrderId, testMachineOrderItemSeqId:childOrderItem.testMachineOrderItemSeqId,
+                            description:childOrderItem.itemDescription,
                             returnQuantity:1.0, returnPrice:childRetAmount, responseAmount:responseAmount]"/>
                 </if>
             </iterate>
@@ -445,227 +523,295 @@ along with this software (see the LICENSE.md file). If not, see
     </service>
 
     <!-- ============================================= -->
-    <!-- ========== Process Return Services ========== -->
+    <!-- ========== Process TestMachineReturn Services ========== -->
     <!-- ============================================= -->
 
-    <service verb="change" noun="ReturnStatusInterface" type="interface">
-        <in-parameters><parameter name="returnId" required="true"/></in-parameters>
-        <out-parameters><parameter name="oldStatusId"/><parameter name="statusChanged" type="Boolean"/></out-parameters>
+    <service verb="change" noun="TestMachineReturnStatusInterface" type="interface">
+        <in-parameters>
+            <parameter name="testMachineReturnId" required="true"/>
+        </in-parameters>
+        <out-parameters>
+            <parameter name="oldStatusId"/>
+            <parameter name="statusChanged" type="Boolean"/>
+        </out-parameters>
     </service>
-    <service verb="update" noun="ReturnStatus">
-        <in-parameters><parameter name="returnId" required="true"/><parameter name="statusId" required="true"/></in-parameters>
-        <out-parameters><parameter name="oldStatusId"/><parameter name="statusChanged" type="Boolean"/></out-parameters>
+    <service verb="update" noun="TestMachineReturnStatus">
+        <in-parameters>
+            <parameter name="testMachineReturnId" required="true"/>
+            <parameter name="statusId" required="true"/>
+        </in-parameters>
+        <out-parameters>
+            <parameter name="oldStatusId"/>
+            <parameter name="statusChanged" type="Boolean"/>
+        </out-parameters>
         <actions>
-            <entity-find entity-name="beiyelin.testmachine.ReturnItem" list="returnItemList">
-                <econdition field-name="returnId"/></entity-find>
-            <iterate list="returnItemList" entry="returnItem">
-                <if condition="returnItem.statusId == 'ReturnCancelled'"><continue/></if>
-                <service-call name="update#beiyelin.testmachine.ReturnItem"
-                    in-map="[returnId:returnId, returnItemSeqId:returnItem.returnItemSeqId, statusId:statusId]"/>
-            </iterate>
+<!--            <entity-find entity-name="beiyelin.testmachine.TestMachineReturnItem" list="testMachineReturnItemList">-->
+<!--                <econdition field-name="testMachineReturnId"/>-->
+<!--            </entity-find>-->
+<!--            <iterate list="testMachineReturnItemList" entry="testMachineReturnItem">-->
+<!--                <if condition="testMachineReturnItem.statusId == 'ReturnCancelled'">-->
+<!--                    <continue/>-->
+<!--                </if>-->
+<!--                <service-call name="update#beiyelin.testmachine.TestMachineReturnItem"-->
+<!--                              in-map="[testMachineReturnId:testMachineReturnId, testMachineReturnItemSeqId:testMachineReturnItem.testMachineReturnItemSeqId, statusId:statusId]"/>-->
+<!--            </iterate>-->
 
             <service-call name="update#beiyelin.testmachine.TestMachineReturnHeader" out-map="context"
-                    in-map="[returnId:returnId, statusId:statusId]"/>
+                          in-map="[testMachineReturnId:testMachineReturnId, statusId:statusId]"/>
         </actions>
     </service>
-    <service verb="checkUpdate" noun="ReturnHeaderStatus">
-        <in-parameters><parameter name="returnId" required="true"/><parameter name="statusId" required="true"/>
-            <parameter name="itemStatusIds" type="Collection" required="true"/></in-parameters>
-        <out-parameters><parameter name="oldStatusId"/><parameter name="statusChanged" type="Boolean"/></out-parameters>
+    <service verb="checkUpdate" noun="TestMachineReturnHeaderStatus">
+        <in-parameters>
+            <parameter name="testMachineReturnId" required="true"/>
+            <parameter name="statusId" required="true"/>
+            <parameter name="itemStatusIds" type="Collection" required="true"/>
+        </in-parameters>
+        <out-parameters>
+            <parameter name="oldStatusId"/>
+            <parameter name="statusChanged" type="Boolean"/>
+        </out-parameters>
         <actions>
             <set field="allMatch" from="true"/>
-            <entity-find entity-name="beiyelin.testmachine.ReturnItem" list="returnItemList">
-                <econdition field-name="returnId"/></entity-find>
-            <iterate list="returnItemList" entry="otherItem">
-                <if condition="!(otherItem.statusId in itemStatusIds)">
-                    <set field="allMatch" from="false"/></if></iterate>
+<!--            <entity-find entity-name="beiyelin.testmachine.TestMachineReturnItem" list="testMachineReturnItemList">-->
+<!--                <econdition field-name="testMachineReturnId"/>-->
+<!--            </entity-find>-->
+<!--            <iterate list="testMachineReturnItemList" entry="otherItem">-->
+<!--                <if condition="!(otherItem.statusId in itemStatusIds)">-->
+<!--                    <set field="allMatch" from="false"/>-->
+<!--                </if>-->
+<!--            </iterate>-->
             <if condition="allMatch">
-                <entity-find-one entity-name="beiyelin.testmachine.TestMachineReturnHeader" value-field="TestMachineReturnHeader"/>
-                <if condition="TestMachineReturnHeader.statusId == statusId"><return/></if>
+                <entity-find-one entity-name="beiyelin.testmachine.TestMachineReturnHeader"
+                                 value-field="TestMachineReturnHeader"/>
+                <if condition="TestMachineReturnHeader.statusId == statusId">
+                    <return/>
+                </if>
                 <entity-find-one entity-name="moqui.basic.StatusItem" value-field="curStatusItem">
-                    <field-map field-name="statusId" from="TestMachineReturnHeader.statusId"/></entity-find-one>
+                    <field-map field-name="statusId" from="TestMachineReturnHeader.statusId"/>
+                </entity-find-one>
                 <entity-find-one entity-name="moqui.basic.StatusItem" value-field="statusItem">
-                    <field-map field-name="statusId"/></entity-find-one>
-                <if condition="statusItem.sequenceNum &lt; curStatusItem.sequenceNum"><return/></if>
+                    <field-map field-name="statusId"/>
+                </entity-find-one>
+                <if condition="statusItem.sequenceNum &lt; curStatusItem.sequenceNum">
+                    <return/>
+                </if>
 
                 <entity-find entity-name="moqui.basic.StatusFlowTransition" list="transitionList">
                     <econdition field-name="statusId" from="TestMachineReturnHeader.statusId"/>
                     <econdition field-name="toStatusId" from="statusId"/>
                 </entity-find>
                 <if condition="transitionList.size() == 0">
-                    <log level="warn" message="In checkUpdate#ReturnHeaderStatus return ${returnId} tried to change from status ${TestMachineReturnHeader.statusId} to ${statusId} which has no transition, not updating TestMachineReturnHeader.statusId"/>
+                    <log level="warn"
+                         message="In checkUpdate#TestMachineReturnHeaderStatus return ${testMachineReturnId} tried to change from status ${TestMachineReturnHeader.statusId} to ${statusId} which has no transition, not updating TestMachineReturnHeader.statusId"/>
                     <return/>
                 </if>
 
                 <service-call name="update#beiyelin.testmachine.TestMachineReturnHeader" out-map="context"
-                        in-map="[returnId:returnId, statusId:statusId]"/>
+                              in-map="[testMachineReturnId:testMachineReturnId, statusId:statusId]"/>
             </if>
         </actions>
     </service>
 
-    <service verb="request" noun="Return">
-        <implements service="beiyelin.testmachineServices.change#ReturnStatusInterface"/>
-        <actions><service-call name="beiyelin.testmachineServices.update#ReturnStatus" out-map="context" in-map="context + [statusId:'ReturnRequested']"/></actions>
+    <service verb="confirm" noun="TestMachineReturn">
+        <implements service="beiyelin.testmachine.TestMachineReturnServices.change#TestMachineReturnStatusInterface"/>
+        <actions>
+            <service-call name="beiyelin.testmachine.TestMachineReturnServices.update#TestMachineReturnStatus" out-map="context"
+                          in-map="context + [statusId:'TMRConfirmed']"/>
+        </actions>
     </service>
-    <service verb="approve" noun="Return">
-        <implements service="beiyelin.testmachineServices.change#ReturnStatusInterface"/>
-        <actions><service-call name="beiyelin.testmachineServices.update#ReturnStatus" out-map="context" in-map="context + [statusId:'ReturnApproved']"/></actions>
-    </service>
+<!--    <service verb="approve" noun="TestMachineReturn">-->
+<!--        <implements service="beiyelin.testmachine.TestMachineReturnServices.change#TestMachineReturnStatusInterface"/>-->
+<!--        <actions>-->
+<!--            <service-call name="beiyelin.testmachine.TestMachineReturnServices.update#TestMachineReturnStatus" out-map="context"-->
+<!--                          in-map="context + [statusId:'ReturnApproved']"/>-->
+<!--        </actions>-->
+<!--    </service>-->
 
-    <service verb="receive" noun="ReturnShipmentItems">
-        <description>Call receive#ReturnItem for all items returned on a Shipment. Called by SECA rule on Shipment status Delivered.</description>
-        <in-parameters><parameter name="shipmentId" required="true"/></in-parameters>
+    <service verb="receive" noun="TestMachineReturnShipmentItems">
+        <description>Call receive#TestMachineReturnItem for all items returned on a Shipment. Called by SECA rule on
+            Shipment status Delivered.
+        </description>
+        <in-parameters>
+            <parameter name="shipmentId" required="true"/>
+        </in-parameters>
         <actions>
             <entity-find-one entity-name="mantle.shipment.Shipment" value-field="shipment"/>
-            <!-- If not a Sales Return Shipment return now -->
-            <if condition="shipment.shipmentTypeEnumId != 'ShpTpSalesReturn'"><return/></if>
 
             <!-- doesn't work with transaction cache, maybe future:
             <entity-find entity-name="mantle.product.receipt.AssetReceiptSummary" list="receiptSummaryList">
                 <econdition field-name="shipmentId"/>
-                <select-field field-name="returnId"/><select-field field-name="returnItemSeqId"/>
+                <select-field field-name="testMachineReturnId"/><select-field field-name="testMachineReturnItemSeqId"/>
                 <select-field field-name="quantityAccepted"/>
             </entity-find>
             <iterate list="receiptSummaryList" entry="receiptSummary">
-                <service-call name="beiyelin.testmachineServices.receive#ReturnItem"
-                        in-map="[returnId:receiptSummary.returnId, returnItemSeqId:receiptSummary.returnItemSeqId,
+                <service-call name="beiyelin.testmachine.TestMachineReturnServices.receive#TestMachineReturnItem"
+                        in-map="[testMachineReturnId:receiptSummary.testMachineReturnId, testMachineReturnItemSeqId:receiptSummary.testMachineReturnItemSeqId,
                             receivedQuantity:receiptSummary.quantityAccepted]"/>
             </iterate>
             -->
             <entity-find entity-name="mantle.product.receipt.AssetReceipt" list="receiptList">
                 <econdition field-name="shipmentId"/>
-                <select-field field-name="returnId"/><select-field field-name="returnItemSeqId"/>
+                <select-field field-name="testMachineReturnId"/>
+                <select-field field-name="testMachineReturnItemSeqId"/>
                 <select-field field-name="quantityAccepted"/>
             </entity-find>
             <set field="receiptSummaryMap" from="[:]"/>
             <iterate list="receiptList" entry="receipt">
-                <if condition="receipt.quantityAccepted &lt;= 0.0"><continue/></if>
-                <script>addToBigDecimalInMap([returnId:receipt.returnId, returnItemSeqId:receipt.returnItemSeqId], receipt.quantityAccepted, receiptSummaryMap)</script>
+                <if condition="receipt.quantityAccepted &lt;= 0.0">
+                    <continue/>
+                </if>
+                <script>addToBigDecimalInMap([testMachineReturnId: receipt.testMachineReturnId, testMachineReturnItemSeqId: receipt.testMachineReturnItemSeqId], receipt.quantityAccepted, receiptSummaryMap)</script>
             </iterate>
             <iterate list="receiptSummaryMap" entry="quantityAccepted" key="idMap">
-                <service-call name="beiyelin.testmachineServices.receive#ReturnItem" in-map="[returnId:idMap.returnId,
-                        returnItemSeqId:idMap.returnItemSeqId, receivedQuantity:quantityAccepted]"/>
+                <service-call name="beiyelin.testmachine.TestMachineReturnServices.receive#TestMachineReturnItem" in-map="[testMachineReturnId:idMap.testMachineReturnId,
+                        testMachineReturnItemSeqId:idMap.testMachineReturnItemSeqId, receivedQuantity:quantityAccepted]"/>
             </iterate>
 
-            <!-- TODO call beiyelin.testmachineServices.process#ReturnItemResponses for each Shipment instead of relaying on SECA rule on TestMachineReturnHeader status change to Received? -->
+            <!-- TODO call beiyelin.testmachine.TestMachineReturnServices.process#TestMachineReturnItemResponses for each Shipment instead of relaying on SECA rule on TestMachineReturnHeader status change to Received? -->
         </actions>
     </service>
-    <service verb="receive" noun="ReturnWithoutShipment">
-        <description>Cancel the return shipment if there is one, mark all return items as received, and process return item responses.</description>
+    <service verb="receive" noun="TestMachineReturnWithoutShipment">
+        <description>Cancel the return shipment if there is one, mark all return items as received, and process return
+            item responses.
+        </description>
         <in-parameters>
-            <parameter name="returnId" required="true"/>
+            <parameter name="testMachineReturnId" required="true"/>
         </in-parameters>
         <actions>
             <!-- find and cancel return shipment -->
             <entity-find entity-name="mantle.shipment.ShipmentItemSource" list="shipmentItemSourceList">
-                <econdition field-name="returnId"/></entity-find>
+                <econdition field-name="testMachineReturnId"/>
+            </entity-find>
             <set field="shipmentIdSet" from="new TreeSet(shipmentItemSourceList*.shipmentId)"/>
             <iterate list="shipmentIdSet" entry="shipmentId">
                 <service-call name="mantle.shipment.ShipmentServices.cancel#Shipment"
-                        in-map="[shipmentId:shipmentId, undoIssueReceive:false]"/>
+                              in-map="[shipmentId:shipmentId, undoIssueReceive:false]"/>
                 <message>Canceled return shipment ${shipmentId}</message>
             </iterate>
 
             <!-- receive all items -->
-            <entity-find entity-name="beiyelin.testmachine.ReturnItem" list="returnItemList" for-update="true">
-                <econdition field-name="returnId"/></entity-find>
-            <iterate list="returnItemList" entry="returnItem">
-                <if condition="!(returnItem.statusId in ['ReturnApproved', 'ReturnShipped'])"><continue/></if>
-                <service-call name="beiyelin.testmachineServices.receive#ReturnItem" out-map="context" in-map="[returnId:returnId,
-                    returnItemSeqId:returnItem.returnItemSeqId, receivedQuantity:(returnItem.returnQuantity - (returnItem.receivedQuantity ?: 0.0))]"/>
+            <entity-find entity-name="beiyelin.testmachine.TestMachineReturnItem" list="testMachineReturnItemList"
+                         for-update="true">
+                <econdition field-name="testMachineReturnId"/>
+            </entity-find>
+            <iterate list="testMachineReturnItemList" entry="testMachineReturnItem">
+                <if condition="!(testMachineReturnItem.statusId in ['ReturnApproved', 'ReturnShipped'])">
+                    <continue/>
+                </if>
+                <service-call name="beiyelin.testmachine.TestMachineReturnServices.receive#TestMachineReturnItem" out-map="context"
+                              in-map="[testMachineReturnId:testMachineReturnId,
+                    testMachineReturnItemSeqId:testMachineReturnItem.testMachineReturnItemSeqId, receivedQuantity:(testMachineReturnItem.returnQuantity - (testMachineReturnItem.receivedQuantity ?: 0.0))]"/>
             </iterate>
 
             <!-- process item responses -->
-            <service-call name="beiyelin.testmachineServices.process#ReturnItemResponses" in-map="[returnId:returnId]"/>
+            <service-call name="beiyelin.testmachine.TestMachineReturnServices.process#TestMachineReturnItemResponses"
+                          in-map="[testMachineReturnId:testMachineReturnId]"/>
         </actions>
     </service>
-    <service verb="receive" noun="ReturnItem">
+    <service verb="receive" noun="TestMachineReturnItem">
         <description>Called per item when return Shipment received</description>
         <in-parameters>
-            <parameter name="returnId" required="true"/>
-            <parameter name="returnItemSeqId" required="true"/>
+            <parameter name="testMachineReturnId" required="true"/>
+            <parameter name="testMachineReturnItemSeqId" required="true"/>
             <parameter name="receivedQuantity" type="BigDecimal" required="true"/>
         </in-parameters>
-        <out-parameters><parameter name="oldStatusId"/><parameter name="statusChanged" type="Boolean"/></out-parameters>
+        <out-parameters>
+            <parameter name="oldStatusId"/>
+            <parameter name="statusChanged" type="Boolean"/>
+        </out-parameters>
         <actions>
-            <if condition="receivedQuantity == 0.0"><return/></if>
-            <entity-find-one entity-name="beiyelin.testmachine.ReturnItem" value-field="returnItem" for-update="true"/>
+            <if condition="receivedQuantity == 0.0">
+                <return/>
+            </if>
+            <entity-find-one entity-name="beiyelin.testmachine.TestMachineReturnItem" value-field="testMachineReturnItem"
+                             for-update="true"/>
 
-            <if condition="returnItem.receivedQuantity">
-                <set field="receivedQuantity" from="receivedQuantity + returnItem.receivedQuantity"/></if>
-            <set field="curReceivedRatio" from="returnItem.returnQuantity &amp;&amp; returnItem.returnQuantity != receivedQuantity ?
-                    (receivedQuantity as BigDecimal).divide(returnItem.returnQuantity, 6, BigDecimal.ROUND_HALF_UP) : 1.0"/>
-            <set field="allReceived" from="returnItem.returnQuantity == receivedQuantity"/>
-            <set field="hasResponse" from="returnItem.responseDate != null"/>
+            <if condition="testMachineReturnItem.receivedQuantity">
+                <set field="receivedQuantity" from="receivedQuantity + testMachineReturnItem.receivedQuantity"/>
+            </if>
+            <set field="curReceivedRatio" from="testMachineReturnItem.returnQuantity &amp;&amp; testMachineReturnItem.returnQuantity != receivedQuantity ?
+                    (receivedQuantity as BigDecimal).divide(testMachineReturnItem.returnQuantity, 6, BigDecimal.ROUND_HALF_UP) : 1.0"/>
+            <set field="allReceived" from="testMachineReturnItem.returnQuantity == receivedQuantity"/>
+            <set field="hasResponse" from="testMachineReturnItem.responseDate != null"/>
 
             <!-- record receivedQuantity and if all received update status to Received -->
             <!-- if !allReceived:
                 if hasResponse record partial qty received and leave open
                 if !hasResponse reduce returnQuantity to receivedQuantity and close item, process response (on child items too)
             -->
-            <service-call name="update#beiyelin.testmachine.ReturnItem" out-map="context"
-                    in-map="[returnId:returnId, returnItemSeqId:returnItemSeqId, receivedQuantity:receivedQuantity,
-                        returnQuantity:(hasResponse ? returnItem.returnQuantity : receivedQuantity),
-                        statusId:(allReceived || !hasResponse ? 'ReturnReceived' : returnItem.statusId)]"/>
+            <service-call name="update#beiyelin.testmachine.TestMachineReturnItem" out-map="context"
+                          in-map="[testMachineReturnId:testMachineReturnId, testMachineReturnItemSeqId:testMachineReturnItemSeqId, receivedQuantity:receivedQuantity,
+                        returnQuantity:(hasResponse ? testMachineReturnItem.returnQuantity : receivedQuantity),
+                        statusId:(allReceived || !hasResponse ? 'ReturnReceived' : testMachineReturnItem.statusId)]"/>
 
             <!-- update receivedQuantity, possibly prorated, on non-product child items -->
-            <entity-find entity-name="beiyelin.testmachine.ReturnItem" list="childItemList">
-                <econdition field-name="returnId"/>
-                <econdition field-name="parentItemSeqId" from="returnItemSeqId"/>
+            <entity-find entity-name="beiyelin.testmachine.TestMachineReturnItem" list="childItemList">
+                <econdition field-name="testMachineReturnId"/>
+                <econdition field-name="parentItemSeqId" from="testMachineReturnItemSeqId"/>
             </entity-find>
             <iterate list="childItemList" entry="childItem">
                 <set field="childReceivedQty" from="curReceivedRatio * (childItem.returnQuantity ?: 1.0)"/>
                 <set field="childHasResponse" from="childItem.responseDate != null"/>
-                <service-call name="update#beiyelin.testmachine.ReturnItem" out-map="context" in-map="[returnId:returnId,
-                        returnItemSeqId:childItem.returnItemSeqId, receivedQuantity:childReceivedQty,
+                <service-call name="update#beiyelin.testmachine.TestMachineReturnItem" out-map="context" in-map="[testMachineReturnId:testMachineReturnId,
+                        testMachineReturnItemSeqId:childItem.testMachineReturnItemSeqId, receivedQuantity:childReceivedQty,
                         returnQuantity:(childHasResponse ? childItem.returnQuantity : childReceivedQty),
                         statusId:(allReceived || !childHasResponse ? 'ReturnReceived' : childItem.statusId)]"/>
             </iterate>
 
             <!-- if all items received update header status to Received -->
-            <service-call name="beiyelin.testmachineServices.checkUpdate#ReturnHeaderStatus" in-map="[returnId:returnId,
+            <service-call name="beiyelin.testmachine.TestMachineReturnServices.checkUpdate#TestMachineReturnHeaderStatus" in-map="[testMachineReturnId:testMachineReturnId,
                     statusId:'ReturnReceived', itemStatusIds:['ReturnReceived', 'ReturnManResp', 'ReturnCompleted', 'ReturnCancelled']]"/>
 
             <!-- if returnResponseEnumId=RrspManual and not already processed, set statusId to ReturnManResp, and on header too -->
-            <if condition="returnItem.returnResponseEnumId == 'RrspManual' &amp;&amp; !returnItem.responseDate">
-                <service-call name="update#beiyelin.testmachine.ReturnItem" in-map="[returnId:returnId,
-                        returnItemSeqId:returnItemSeqId, statusId:'ReturnManResp']"/>
-                <service-call name="beiyelin.testmachineServices.checkUpdate#ReturnHeaderStatus" in-map="[returnId:returnId,
+            <if condition="testMachineReturnItem.returnResponseEnumId == 'RrspManual' &amp;&amp; !testMachineReturnItem.responseDate">
+                <service-call name="update#beiyelin.testmachine.TestMachineReturnItem" in-map="[testMachineReturnId:testMachineReturnId,
+                        testMachineReturnItemSeqId:testMachineReturnItemSeqId, statusId:'ReturnManResp']"/>
+                <service-call name="beiyelin.testmachine.TestMachineReturnServices.checkUpdate#TestMachineReturnHeaderStatus" in-map="[testMachineReturnId:testMachineReturnId,
                         statusId:'ReturnManResp', itemStatusIds:['ReturnReceived', 'ReturnManResp', 'ReturnCancelled']]"/>
             </if>
 
             <!-- if response already processed (responseDate set) status to ReturnCompleted, and on header too -->
             <if condition="hasResponse">
-                <service-call name="beiyelin.testmachineServices.complete#ReturnItem"
-                        in-map="[returnId:returnId, returnItemSeqId:returnItemSeqId]"/>
+                <service-call name="beiyelin.testmachine.TestMachineReturnServices.complete#TestMachineReturnItem"
+                              in-map="[testMachineReturnId:testMachineReturnId, testMachineReturnItemSeqId:testMachineReturnItemSeqId]"/>
             </if>
         </actions>
     </service>
-    <service verb="complete" noun="ReturnItem">
-        <in-parameters><parameter name="returnId" required="true"/><parameter name="returnItemSeqId" required="true"/></in-parameters>
-        <out-parameters><parameter name="oldStatusId"/><parameter name="statusChanged" type="Boolean"/></out-parameters>
+    <service verb="complete" noun="TestMachineReturnItem">
+        <in-parameters>
+            <parameter name="testMachineReturnId" required="true"/>
+            <parameter name="testMachineReturnItemSeqId" required="true"/>
+        </in-parameters>
+        <out-parameters>
+            <parameter name="oldStatusId"/>
+            <parameter name="statusChanged" type="Boolean"/>
+        </out-parameters>
         <actions>
-            <service-call name="update#beiyelin.testmachine.ReturnItem" in-map="[returnId:returnId,
-                    returnItemSeqId:returnItemSeqId, statusId:'ReturnCompleted']"/>
-            <service-call name="beiyelin.testmachineServices.checkUpdate#ReturnHeaderStatus" in-map="[returnId:returnId,
+            <service-call name="update#beiyelin.testmachine.TestMachineReturnItem" in-map="[testMachineReturnId:testMachineReturnId,
+                    testMachineReturnItemSeqId:testMachineReturnItemSeqId, statusId:'ReturnCompleted']"/>
+            <service-call name="beiyelin.testmachine.TestMachineReturnServices.checkUpdate#TestMachineReturnHeaderStatus" in-map="[testMachineReturnId:testMachineReturnId,
                     statusId:'ReturnCompleted', itemStatusIds:['ReturnCompleted', 'ReturnCancelled']]"/>
         </actions>
     </service>
 
-    <service verb="process" noun="ReturnItemResponses">
+    <service verb="process" noun="TestMachineReturnItemResponses">
         <description>
             Process responses for items with statuses other than Created, Requested, or Cancelled.
-            Called by SECA rule on TestMachineReturnHeader Approved and ReturnItem Received statuses.
-            If ReturnItem.responseImmediate = 'Y' process on Approved status or later (Shipped, Received, Completed).
-            If ReturnItem.responseImmediate = 'N' (or null) process on Received status or later (Completed).
+            Called by SECA rule on TestMachineReturnHeader Approved and TestMachineReturnItem Received statuses.
+            If TestMachineReturnItem.responseImmediate = 'Y' process on Approved status or later (Shipped, Received,
+            Completed).
+            If TestMachineReturnItem.responseImmediate = 'N' (or null) process on Received status or later (Completed).
             Only processes responses for items with no response already (responseDate == null).
         </description>
         <in-parameters>
-            <parameter name="returnId" required="true"/>
-            <parameter name="returnItemSeqId"><description>If not specified try processing all items (most common)</description></parameter>
+            <parameter name="testMachineReturnId" required="true"/>
+            <parameter name="testMachineReturnItemSeqId">
+                <description>If not specified try processing all items (most common)</description>
+            </parameter>
         </in-parameters>
         <actions>
-            <entity-find-one entity-name="beiyelin.testmachine.TestMachineReturnHeader" value-field="TestMachineReturnHeader"/>
+            <entity-find-one entity-name="beiyelin.testmachine.TestMachineReturnHeader"
+                             value-field="TestMachineReturnHeader"/>
 
             <!-- NOTE: may be better date for this, like maybe Shipment receipt date/time -->
             <set field="responseDate" from="ec.user.nowTimestamp"/>
@@ -673,15 +819,20 @@ along with this software (see the LICENSE.md file). If not, see
             <!-- make sure customer is not an internal org, ie this is a sales return and not a purchase return -->
             <entity-find-one entity-name="mantle.party.PartyRole" value-field="customerOrgInternal">
                 <field-map field-name="partyId" from="TestMachineReturnHeader.customerPartyId"/>
-                <field-map field-name="roleTypeId" value="OrgInternal"/></entity-find-one>
-            <if condition="customerOrgInternal"><return message="Cannot process return responses for supplier purchase return"/></if>
+                <field-map field-name="roleTypeId" value="OrgInternal"/>
+            </entity-find-one>
+            <if condition="customerOrgInternal">
+                <return message="Cannot process return responses for supplier purchase return"/>
+            </if>
 
-            <entity-find entity-name="beiyelin.testmachine.ReturnItem" list="returnItemList" for-update="true">
-                <econdition field-name="returnId"/>
-                <econdition field-name="returnItemSeqId" ignore-if-empty="true"/>
-                <order-by field-name="returnItemSeqId"/>
+            <entity-find entity-name="beiyelin.testmachine.TestMachineReturnItem" list="testMachineReturnItemList"
+                         for-update="true">
+                <econdition field-name="testMachineReturnId"/>
+                <econdition field-name="testMachineReturnItemSeqId" ignore-if-empty="true"/>
+                <order-by field-name="testMachineReturnItemSeqId"/>
             </entity-find>
-            <set field="originalReplacementOrderIdSet" from="new HashSet(returnItemList*.replacementOrderId)"/>
+            <set field="originalReplacementOrderIdSet"
+                 from="new HashSet(testMachineReturnItemList*.replacementOrderId)"/>
             <script>originalReplacementOrderIdSet.remove(null)</script>
 
             <!-- split list into credit, refund, replace; check credit and refund items for unpaid invoices to adjust instead -->
@@ -690,52 +841,62 @@ along with this software (see the LICENSE.md file). If not, see
             <set field="replaceItemList" from="[]"/>
             <set field="remainingAmountBySeqId" from="[:]"/>
             <set field="returnInvoiceId" from="null"/>
-            <iterate list="returnItemList" entry="returnItem">
-                <if condition="returnItem.responseDate != null"><continue/></if>
+            <iterate list="testMachineReturnItemList" entry="testMachineReturnItem">
+                <if condition="testMachineReturnItem.responseDate != null">
+                    <continue/>
+                </if>
                 <!-- only process response for items in status Received or Completed OR in status Approved or Shipped and are either Replace items or have responseImmediate == Y -->
-                <!-- Replace items are included in the earlier status so we can create a Replacement Order in Placed status right away -->
-                <set field="validStatus" from="returnItem.statusId in ['ReturnReceived', 'ReturnCompleted'] ||
-                    ((returnItem.responseImmediate == 'Y' || returnItem.returnResponseEnumId == 'RrspReplace') &amp;&amp; returnItem.statusId in ['ReturnApproved', 'ReturnShipped'])"/>
-                <if condition="!validStatus"><continue/></if>
+                <!-- Replace items are included in the earlier status so we can create a Replacement TestMachineOrder in Placed status right away -->
+                <set field="validStatus" from="testMachineReturnItem.statusId in ['ReturnReceived', 'ReturnCompleted'] ||
+                    ((testMachineReturnItem.responseImmediate == 'Y' || testMachineReturnItem.returnResponseEnumId == 'RrspReplace') &amp;&amp; testMachineReturnItem.statusId in ['ReturnApproved', 'ReturnShipped'])"/>
+                <if condition="!validStatus">
+                    <continue/>
+                </if>
 
                 <!-- see if the invoice for returned order item is not yet paid, if so cancel/credit instead of credit or refund -->
-                <if condition="returnItem.returnResponseEnumId in ['RrspCredit', 'RrspRefund']">
-                    <entity-find-related-one value-field="returnItem" relationship-name="orderItem" to-value-field="orderItem"/>
-                    <set field="itemQuantity" from="returnItem.receivedQuantity ?: returnItem.returnQuantity ?: 0.0"/>
-                    <set field="itemAmount" from="returnItem.returnPrice ?: orderItem?.unitAmount ?: 0.0"/>
-                    <set field="amountRemaining" from="(returnItem.responseAmount ?: (itemQuantity * itemAmount)).setScale(2, BigDecimal.ROUND_HALF_UP)"/>
+                <if condition="testMachineReturnItem.returnResponseEnumId in ['RrspCredit', 'RrspRefund']">
+                    <entity-find-related-one value-field="testMachineReturnItem" relationship-name="testMachineOrderItem"
+                                             to-value-field="testMachineOrderItem"/>
+                    <set field="itemQuantity" from="testMachineReturnItem.receivedQuantity ?: testMachineReturnItem.returnQuantity ?: 0.0"/>
+                    <set field="itemAmount" from="testMachineReturnItem.returnPrice ?: testMachineOrderItem?.unitPrice ?: 0.0"/>
+                    <set field="amountRemaining"
+                         from="(testMachineReturnItem.responseAmount ?: (itemQuantity * itemAmount)).setScale(2, BigDecimal.ROUND_HALF_UP)"/>
                     <if condition="!amountRemaining">
-                        <message>Return Item ${returnId}:${returnItem.returnItemSeqId} has no amount, not processing credit response</message>
-                        <script>remainingAmountBySeqId.put(returnItem.returnItemSeqId, 0.0)</script>
+                        <message>TestMachineReturn Item ${testMachineReturnId}:${testMachineReturnItem.testMachineReturnItemSeqId} has no
+                            amount, not processing credit response
+                        </message>
+                        <script>remainingAmountBySeqId.put(testMachineReturnItem.testMachineReturnItemSeqId, 0.0)</script>
                         <continue/>
                     </if>
-                    <script>remainingAmountBySeqId.put(returnItem.returnItemSeqId, amountRemaining)</script>
+                    <script>remainingAmountBySeqId.put(testMachineReturnItem.testMachineReturnItemSeqId, amountRemaining)</script>
 
                     <!-- always create return credit memo invoice; better not to adjust the original invoice, easier to track and reconcile -->
                     <!-- if only partial quantity received (receivedQuantity < returnQuantity) then prorate product item amounts and child item amounts (via itemQuantity, itemAmount) -->
-                    <!-- create ReturnItemBilling records to connect ReturnItem and InvoiceItem -->
+                    <!-- create ReturnItemBilling records to connect TestMachineReturnItem and InvoiceItem -->
 
                     <!-- create return credit memo Invoice if needed -->
                     <if condition="!returnInvoiceId">
-                        <service-call name="mantle.account.InvoiceServices.create#Invoice" out-map="returnInvoiceOut" out-map-add-to-existing="false"
-                                in-map="[fromPartyId:TestMachineReturnHeader.customerPartyId, toPartyId:TestMachineReturnHeader.vendorPartyId,
+                        <service-call name="mantle.account.InvoiceServices.create#Invoice" out-map="returnInvoiceOut"
+                                      out-map-add-to-existing="false"
+                                      in-map="[fromPartyId:TestMachineReturnHeader.customerPartyId, toPartyId:TestMachineReturnHeader.vendorPartyId,
                                     invoiceTypeEnumId:'InvoiceReturn', invoiceDate:responseDate, currencyUomId:TestMachineReturnHeader.currencyUomId]"/>
                         <set field="returnInvoiceId" from="returnInvoiceOut.invoiceId"/>
                     </if>
                     <!-- create return credit memo InvoiceItem -->
-                    <service-call name="mantle.account.InvoiceServices.create#InvoiceItem" out-map="retInvItemOut" out-map-add-to-existing="false"
-                            in-map="[invoiceId:returnInvoiceId, itemTypeEnumId:returnItem.itemTypeEnumId, description:returnItem.description,
-                                quantity:itemQuantity, amount:itemAmount, productId:returnItem.productId]"/>
+                    <service-call name="mantle.account.InvoiceServices.create#InvoiceItem" out-map="retInvItemOut"
+                                  out-map-add-to-existing="false"
+                                  in-map="[invoiceId:returnInvoiceId, itemTypeEnumId:testMachineReturnItem.itemTypeEnumId, description:testMachineReturnItem.description,
+                                quantity:itemQuantity, amount:itemAmount, productId:testMachineReturnItem.productId]"/>
                     <!-- create ReturnItemBilling -->
                     <!-- TODO populate assetReceiptId -->
-                    <service-call name="create#beiyelin.testmachine.ReturnItemBilling" in-map="[returnId:returnId,
-                            returnItemSeqId:returnItem.returnItemSeqId, invoiceId:returnInvoiceId,
+                    <service-call name="create#beiyelin.testmachine.ReturnItemBilling" in-map="[testMachineReturnId:testMachineReturnId,
+                            testMachineReturnItemSeqId:testMachineReturnItem.testMachineReturnItemSeqId, invoiceId:returnInvoiceId,
                             invoiceItemSeqId:retInvItemOut.invoiceItemSeqId, quantity:itemQuantity, amount:itemAmount]"/>
 
                     <!-- old approach: adjust original invoice
                     <entity-find entity-name="mantle.order.OrderItemBilling" list="oibList">
-                        <econdition field-name="orderId" from="returnItem.orderId"/>
-                        <econdition field-name="orderItemSeqId" from="returnItem.orderItemSeqId"/></entity-find>
+                        <econdition field-name="testMachineOrderId" from="testMachineReturnItem.testMachineOrderId"/>
+                        <econdition field-name="testMachineOrderItemSeqId" from="testMachineReturnItem.testMachineOrderItemSeqId"/></entity-find>
                     <iterate list="oibList" entry="oib">
                         <set field="invoiceItem" from="oib.invoiceItem"/>
                         <set field="iiTotal" from="(oib.quantity ?: 0.0) * (invoiceItem.amount ?: 0.0)"/>
@@ -749,7 +910,7 @@ along with this software (see the LICENSE.md file). If not, see
                             <set field="adjustAmount" from="invTotal.unpaidTotal &gt; adjustAmount ? adjustAmount : invTotal.unpaidTotal"/>
                             <!- - call invoice adjust, subtract adjustAmount - ->
                             <!- - NOTE: more direct way to link back to return item (than new ii to parent ii to oib to oi to ri)? - ->
-                            <set field="adjDesc" value="Return Item ${returnId}:${returnItem.returnItemSeqId} for Order Item ${orderItem.orderId}:${orderItem.orderItemSeqId}"/>
+                            <set field="adjDesc" value="TestMachineReturn Item ${testMachineReturnId}:${testMachineReturnItem.testMachineReturnItemSeqId} for TestMachineOrder Item ${testMachineOrderItem.testMachineOrderId}:${testMachineOrderItem.testMachineOrderItemSeqId}"/>
                             <service-call name="mantle.account.InvoiceServices.adjust#Invoice"
                                     in-map="[invoiceId:oib.invoiceId, description:adjDesc, amount:adjustAmount,
                                         parentInvoiceItemSeqId:oib.invoiceItemSeqId, itemTypeEnumId:'ItemReturnAdjust']"/>
@@ -760,67 +921,76 @@ along with this software (see the LICENSE.md file). If not, see
                     </iterate>
 
                     <!- - save the amountRemaining so if there is any credit or refund it is only that amount - ->
-                    <script>remainingAmountBySeqId.put(returnItem.returnItemSeqId, amountRemaining)</script>
+                    <script>remainingAmountBySeqId.put(testMachineReturnItem.testMachineReturnItemSeqId, amountRemaining)</script>
                     -->
                 </if>
 
-                <if condition="returnItem.returnResponseEnumId == 'RrspCredit'"><then>
-                    <script>creditItemList.add(returnItem)</script>
-                </then><else-if condition="returnItem.returnResponseEnumId == 'RrspRefund'">
-                    <script>refundItemList.add(returnItem)</script>
-                </else-if><else-if condition="returnItem.returnResponseEnumId == 'RrspReplace'">
-                    <script>replaceItemList.add(returnItem)</script>
-                </else-if></if>
+                <if condition="testMachineReturnItem.returnResponseEnumId == 'RrspCredit'">
+                    <then>
+                        <script>creditItemList.add(testMachineReturnItem)</script>
+                    </then>
+                    <else-if condition="testMachineReturnItem.returnResponseEnumId == 'RrspRefund'">
+                        <script>refundItemList.add(testMachineReturnItem)</script>
+                    </else-if>
+                    <else-if condition="testMachineReturnItem.returnResponseEnumId == 'RrspReplace'">
+                        <script>replaceItemList.add(testMachineReturnItem)</script>
+                    </else-if>
+                </if>
             </iterate>
-            <!-- <log message="Response ${returnId}:${returnItemSeqId} \n creditItemList: ${creditItemList} \n refundItemList: ${refundItemList} \n replaceItemList: ${replaceItemList}"/> -->
+            <!-- <log message="Response ${testMachineReturnId}:${testMachineReturnItemSeqId} \n creditItemList: ${creditItemList} \n refundItemList: ${refundItemList} \n replaceItemList: ${replaceItemList}"/> -->
 
             <!-- Customer Credit (Financial Account Transaction) -->
             <if condition="creditItemList">
                 <set field="creditTotal" from="0.0"/>
                 <set field="faItemList" from="[]"/>
-                <iterate list="creditItemList" entry="returnItem">
-                    <set field="itemTotal" from="remainingAmountBySeqId.get(returnItem.returnItemSeqId)"/>
-                    <if condition="itemTotal == 0.0"><continue/></if>
+                <iterate list="creditItemList" entry="testMachineReturnItem">
+                    <set field="itemTotal" from="remainingAmountBySeqId.get(testMachineReturnItem.testMachineReturnItemSeqId)"/>
+                    <if condition="itemTotal == 0.0">
+                        <continue/>
+                    </if>
 
                     <set field="creditTotal" from="creditTotal + itemTotal"/>
-                    <script>faItemList.add(returnItem)</script>
-                    <set field="returnItem.responseAmount" from="itemTotal"/>
-                    <set field="returnItem.responseDate" from="responseDate"/>
+                    <script>faItemList.add(testMachineReturnItem)</script>
+                    <set field="testMachineReturnItem.responseAmount" from="itemTotal"/>
+                    <set field="testMachineReturnItem.responseDate" from="responseDate"/>
                 </iterate>
 
                 <if condition="creditTotal">
                     <set field="finAccountId" from="TestMachineReturnHeader.finAccountId"/>
                     <if condition="!finAccountId">
                         <service-call name="mantle.account.FinancialAccountServices.getOrCreate#FinancialAccount"
-                                in-map="[finAccountTypeId:'CustomerCredit', ownerPartyId:TestMachineReturnHeader.customerPartyId,
+                                      in-map="[finAccountTypeId:'CustomerCredit', ownerPartyId:TestMachineReturnHeader.customerPartyId,
                                 organizationPartyId:TestMachineReturnHeader.vendorPartyId]" out-map="context"/>
                     </if>
 
                     <!-- create the FA Payment -->
-                    <service-call name="mantle.account.PaymentServices.create#Payment" out-map="faPaymentOut" out-map-add-to-existing="false"
-                            in-map="[paymentTypeEnumId:'PtInvoicePayment', statusId:'PmntAuthorized',
+                    <service-call name="mantle.account.PaymentServices.create#Payment" out-map="faPaymentOut"
+                                  out-map-add-to-existing="false"
+                                  in-map="[paymentTypeEnumId:'PtInvoicePayment', statusId:'PmntAuthorized',
                                 paymentInstrumentEnumId:'PiFinancialAccount', finAccountId:finAccountId, effectiveDate:responseDate,
                                 fromPartyId:TestMachineReturnHeader.vendorPartyId, toPartyId:TestMachineReturnHeader.customerPartyId,
                                 amount:creditTotal, amountUomId:TestMachineReturnHeader.currencyUomId, forInvoiceId:returnInvoiceId]"/>
                     <!-- deliver the FA Payment via FA Trans; NOTE: could also do via SECA on set payment status to Delivered -->
-                    <service-call name="mantle.account.FinancialAccountServices.checkCreate#PaymentTrans" out-map="faTxOut" out-map-add-to-existing="false"
-                            in-map="[paymentId:faPaymentOut.paymentId, reasonEnumId:'FatrCsCredit']"/>
+                    <service-call name="mantle.account.FinancialAccountServices.checkCreate#PaymentTrans"
+                                  out-map="faTxOut" out-map-add-to-existing="false"
+                                  in-map="[paymentId:faPaymentOut.paymentId, reasonEnumId:'FatrCsCredit']"/>
 
                     <!-- set finAccountTransId and update all credit return items -->
-                    <iterate list="faItemList" entry="returnItem">
-                        <set field="returnItem.finAccountTransId" from="faTxOut.finAccountTransId"/>
-                        <set field="returnItem.refundPaymentId" from="faPaymentOut.paymentId"/>
-                        <entity-update value-field="returnItem"/>
+                    <iterate list="faItemList" entry="testMachineReturnItem">
+                        <set field="testMachineReturnItem.finAccountTransId" from="faTxOut.finAccountTransId"/>
+                        <set field="testMachineReturnItem.refundPaymentId" from="faPaymentOut.paymentId"/>
+                        <entity-update value-field="testMachineReturnItem"/>
 
-                        <if condition="returnItem.statusId == 'ReturnReceived'">
-                            <service-call name="beiyelin.testmachineServices.complete#ReturnItem"
-                                    in-map="[returnId:returnId, returnItemSeqId:returnItem.returnItemSeqId]"/></if>
+                        <if condition="testMachineReturnItem.statusId == 'ReturnReceived'">
+                            <service-call name="beiyelin.testmachine.TestMachineReturnServices.complete#TestMachineReturnItem"
+                                          in-map="[testMachineReturnId:testMachineReturnId, testMachineReturnItemSeqId:testMachineReturnItem.testMachineReturnItemSeqId]"/>
+                        </if>
                     </iterate>
                 </if>
             </if>
             <!-- old approach, one direct FA transaction per item:
-            <iterate list="creditItemList" entry="returnItem">
-                <set field="itemTotal" from="remainingAmountBySeqId.get(returnItem.returnItemSeqId)"/>
+            <iterate list="creditItemList" entry="testMachineReturnItem">
+                <set field="itemTotal" from="remainingAmountBySeqId.get(testMachineReturnItem.testMachineReturnItemSeqId)"/>
                 <if condition="itemTotal == 0.0"><continue/></if>
 
                 <set field="finAccountId" from="TestMachineReturnHeader.finAccountId"/>
@@ -833,20 +1003,20 @@ along with this software (see the LICENSE.md file). If not, see
                 <if condition="itemTotal &gt; 0.0"><then>
                     <service-call name="mantle.account.FinancialAccountServices.deposit#FinancialAccount" out-map="faTxOut"
                             in-map="[finAccountId:finAccountId, reasonEnumId:'FatrCsCredit', amount:itemTotal]"/>
-                    <set field="returnItem.finAccountTransId" from="faTxOut.finAccountTransId"/>
+                    <set field="testMachineReturnItem.finAccountTransId" from="faTxOut.finAccountTransId"/>
                 </then><else>
                     <service-call name="mantle.account.FinancialAccountServices.withdraw#FinancialAccount" out-map="faTxOut"
                             in-map="[finAccountId:finAccountId, reasonEnumId:'FatrCsCredit', amount:-itemTotal]"/>
-                    <set field="returnItem.finAccountTransId" from="faTxOut.finAccountTransId"/>
+                    <set field="testMachineReturnItem.finAccountTransId" from="faTxOut.finAccountTransId"/>
                 </else></if>
 
-                <set field="returnItem.responseAmount" from="itemTotal"/>
-                <set field="returnItem.responseDate" from="responseDate"/>
-                <entity-update value-field="returnItem"/>
+                <set field="testMachineReturnItem.responseAmount" from="itemTotal"/>
+                <set field="testMachineReturnItem.responseDate" from="responseDate"/>
+                <entity-update value-field="testMachineReturnItem"/>
 
-                <if condition="returnItem.statusId == 'ReturnReceived'">
-                    <service-call name="beiyelin.testmachineServices.complete#ReturnItem"
-                            in-map="[returnId:returnId, returnItemSeqId:returnItem.returnItemSeqId]"/></if>
+                <if condition="testMachineReturnItem.statusId == 'ReturnReceived'">
+                    <service-call name="beiyelin.testmachine.TestMachineReturnServices.complete#TestMachineReturnItem"
+                            in-map="[testMachineReturnId:testMachineReturnId, testMachineReturnItemSeqId:testMachineReturnItem.testMachineReturnItemSeqId]"/></if>
             </iterate>
             -->
 
@@ -858,33 +1028,41 @@ along with this software (see the LICENSE.md file). If not, see
                 <set field="paymentTotal" from="0.0"/>
                 <set field="paymentItemList" from="[]"/>
                 <set field="returnItemByOrderPartId" from="[:]"/>
-                <iterate list="refundItemList" entry="returnItem">
-                    <set field="itemTotal" from="remainingAmountBySeqId.get(returnItem.returnItemSeqId)"/>
-                    <if condition="itemTotal == 0.0"><continue/></if>
+                <iterate list="refundItemList" entry="testMachineReturnItem">
+                    <set field="itemTotal" from="remainingAmountBySeqId.get(testMachineReturnItem.testMachineReturnItemSeqId)"/>
+                    <if condition="itemTotal == 0.0">
+                        <continue/>
+                    </if>
 
                     <if condition="TestMachineReturnHeader.useSingleRefundPayment != 'Y'">
                         <!-- TODO look at original payments for each OrderPart, if credit card payment found that is not too old then refund to card -->
                     </if>
 
                     <set field="paymentTotal" from="paymentTotal + itemTotal"/>
-                    <script>paymentItemList.add(returnItem)</script>
-                    <set field="returnItem.responseAmount" from="itemTotal"/>
-                    <set field="returnItem.responseDate" from="responseDate"/>
+                    <script>paymentItemList.add(testMachineReturnItem)</script>
+                    <set field="testMachineReturnItem.responseAmount" from="itemTotal"/>
+                    <set field="testMachineReturnItem.responseDate" from="responseDate"/>
                 </iterate>
 
                 <if condition="paymentTotal">
-                    <!-- lookup Return Refund PaymentMethod (BankAccount) for internal org (vendor) -->
+                    <!-- lookup TestMachineReturn Refund PaymentMethod (BankAccount) for internal org (vendor) -->
                     <entity-find entity-name="mantle.account.method.PaymentMethod" list="paymentMethodList">
-                        <date-filter/><econdition field-name="ownerPartyId" from="TestMachineReturnHeader.vendorPartyId"/>
+                        <date-filter/>
+                        <econdition field-name="ownerPartyId" from="TestMachineReturnHeader.vendorPartyId"/>
                         <econdition field-name="purposeEnumId" value="PmpReturnRefund"/>
                         <order-by field-name="-fromDate"/>
                     </entity-find>
-                    <if condition="!paymentMethodList"><entity-find entity-name="mantle.account.method.PaymentMethod" list="paymentMethodList">
-                        <date-filter/><econdition field-name="ownerPartyId" from="TestMachineReturnHeader.vendorPartyId"/>
-                        <econdition field-name="purposeEnumId" value="PmpGeneral"/>
-                        <order-by field-name="-fromDate"/>
-                    </entity-find></if>
-                    <if condition="paymentMethodList"><set field="paymentMethodId" from="paymentMethodList[0].paymentMethodId"/></if>
+                    <if condition="!paymentMethodList">
+                        <entity-find entity-name="mantle.account.method.PaymentMethod" list="paymentMethodList">
+                            <date-filter/>
+                            <econdition field-name="ownerPartyId" from="TestMachineReturnHeader.vendorPartyId"/>
+                            <econdition field-name="purposeEnumId" value="PmpGeneral"/>
+                            <order-by field-name="-fromDate"/>
+                        </entity-find>
+                    </if>
+                    <if condition="paymentMethodList">
+                        <set field="paymentMethodId" from="paymentMethodList[0].paymentMethodId"/>
+                    </if>
 
                     <!-- handle other side of Payment, for each refund Payment here:
                         (may be multiple Payments applied to sales invoice, if some Delivered/Applied and others not then generate partial invoice if needed and reduce the undelivered payments?)
@@ -901,19 +1079,21 @@ along with this software (see the LICENSE.md file). If not, see
                     -->
 
                     <!-- NOTE: don't specify paymentInstrumentEnumId, create#Payment will determine from toPaymentMethodId or default to PiCompanyCheck (paymentInstrumentEnumId:'PiCompanyCheck',) -->
-                    <service-call name="mantle.account.PaymentServices.create#Payment" out-map="refundPmntOut" out-map-add-to-existing="false"
-                        in-map="[paymentTypeEnumId:'PtRefund', statusId:'PmntPromised',
+                    <service-call name="mantle.account.PaymentServices.create#Payment" out-map="refundPmntOut"
+                                  out-map-add-to-existing="false"
+                                  in-map="[paymentTypeEnumId:'PtRefund', statusId:'PmntPromised',
                             fromPartyId:TestMachineReturnHeader.vendorPartyId, toPartyId:TestMachineReturnHeader.customerPartyId,
                             paymentMethodId:paymentMethodId, toPaymentMethodId:TestMachineReturnHeader.paymentMethodId,
                             amount:paymentTotal, amountUomId:TestMachineReturnHeader.currencyUomId, forInvoiceId:returnInvoiceId]"/>
 
-                    <iterate list="paymentItemList" entry="returnItem">
-                        <set field="returnItem.refundPaymentId" from="refundPmntOut.paymentId"/>
-                        <entity-update value-field="returnItem"/>
+                    <iterate list="paymentItemList" entry="testMachineReturnItem">
+                        <set field="testMachineReturnItem.refundPaymentId" from="refundPmntOut.paymentId"/>
+                        <entity-update value-field="testMachineReturnItem"/>
 
-                        <if condition="returnItem.statusId == 'ReturnReceived'">
-                            <service-call name="beiyelin.testmachineServices.complete#ReturnItem"
-                                    in-map="[returnId:returnId, returnItemSeqId:returnItem.returnItemSeqId]"/></if>
+                        <if condition="testMachineReturnItem.statusId == 'ReturnReceived'">
+                            <service-call name="beiyelin.testmachine.TestMachineReturnServices.complete#TestMachineReturnItem"
+                                          in-map="[testMachineReturnId:testMachineReturnId, testMachineReturnItemSeqId:testMachineReturnItem.testMachineReturnItemSeqId]"/>
+                        </if>
                     </iterate>
 
                     <!-- TODO: if CC do refund Payment via gateway; may need new code that
@@ -923,7 +1103,7 @@ along with this software (see the LICENSE.md file). If not, see
                 </if>
             </if>
 
-            <!-- Replace (Order); consolidate all -->
+            <!-- Replace (TestMachineOrder); consolidate all -->
             <if condition="replaceItemList">
                 <!-- split into two lists for Placed vs Approved replacement orders (break down big 'validStatus' condition):
                     1. Approved: item status is ReturnReceived or ReturnCompleted OR responseImmediate == 'Y'
@@ -932,70 +1112,81 @@ along with this software (see the LICENSE.md file). If not, see
                 <set field="approvedItemSet" from="new HashSet()"/>
                 <set field="placedItemSet" from="new HashSet()"/>
                 <iterate list="replaceItemList" entry="replaceItem">
-                    <if condition="replaceItem.responseImmediate == 'Y' || replaceItem.statusId in ['ReturnReceived', 'ReturnCompleted']"><then>
-                        <script>approvedItemSet.add(replaceItem.returnItemSeqId)</script>
-                    </then><else>
-                        <script>placedItemSet.add(replaceItem.returnItemSeqId)</script>
-                    </else></if>
+                    <if condition="replaceItem.responseImmediate == 'Y' || replaceItem.statusId in ['ReturnReceived', 'ReturnCompleted']">
+                        <then>
+                            <script>approvedItemSet.add(replaceItem.testMachineReturnItemSeqId)</script>
+                        </then>
+                        <else>
+                            <script>placedItemSet.add(replaceItem.testMachineReturnItemSeqId)</script>
+                        </else>
+                    </if>
                 </iterate>
 
                 <if condition="approvedItemSet">
-                    <service-call name="mantle.order.OrderServices.create#Order" out-map="approvedOrderOut"
-                            in-map="[vendorPartyId:TestMachineReturnHeader.vendorPartyId, customerPartyId:TestMachineReturnHeader.customerPartyId]"/>
+                    <service-call name="beiyelin.testmachine.TestMachineOrderServices.create#TestMachineOrder" out-map="approvedOrderOut"
+                                  in-map="[vendorPartyId:TestMachineReturnHeader.vendorPartyId, customerPartyId:TestMachineReturnHeader.customerPartyId]"/>
                 </if>
                 <if condition="placedItemSet">
-                    <service-call name="mantle.order.OrderServices.create#Order" out-map="placedOrderOut"
-                            in-map="[vendorPartyId:TestMachineReturnHeader.vendorPartyId, customerPartyId:TestMachineReturnHeader.customerPartyId]"/>
+                    <service-call name="beiyelin.testmachine.TestMachineOrderServices.create#TestMachineOrder" out-map="placedOrderOut"
+                                  in-map="[vendorPartyId:TestMachineReturnHeader.vendorPartyId, customerPartyId:TestMachineReturnHeader.customerPartyId]"/>
                 </if>
 
-                <iterate list="replaceItemList" entry="returnItem">
-                    <set field="replaceOrderId" from="approvedItemSet.contains(returnItem.returnItemSeqId) ? approvedOrderOut.orderId : placedOrderOut.orderId"/>
-                    <set field="itemQuantity" from="returnItem.receivedQuantity ?: returnItem.returnQuantity"/>
+                <iterate list="replaceItemList" entry="testMachineReturnItem">
+                    <set field="replaceOrderId"
+                         from="approvedItemSet.contains(testMachineReturnItem.testMachineReturnItemSeqId) ? approvedOrderOut.testMachineOrderId : placedOrderOut.testMachineOrderId"/>
+                    <set field="itemQuantity" from="testMachineReturnItem.receivedQuantity ?: testMachineReturnItem.returnQuantity"/>
 
-                    <service-call name="mantle.order.OrderServices.add#OrderProductQuantity"
-                            in-map="[orderId:replaceOrderId, productId:(returnItem.replacementProductId ?: returnItem.productId),
-                                quantity:itemQuantity, unitAmount:0.0]"/>
+                    <service-call name="beiyelin.testmachine.TestMachineOrderServices.add#OrderProductQuantity"
+                                  in-map="[testMachineOrderId:replaceOrderId, productId:(testMachineReturnItem.replacementProductId ?: testMachineReturnItem.productId),
+                                quantity:itemQuantity, unitPrice:0.0]"/>
 
-                    <set field="returnItem.replacementOrderId" from="replaceOrderId"/>
-                    <set field="returnItem.responseDate" from="responseDate"/>
-                    <entity-update value-field="returnItem"/>
+                    <set field="testMachineReturnItem.replacementOrderId" from="replaceOrderId"/>
+                    <set field="testMachineReturnItem.responseDate" from="responseDate"/>
+                    <entity-update value-field="testMachineReturnItem"/>
 
-                    <if condition="returnItem.statusId == 'ReturnReceived'">
-                        <service-call name="beiyelin.testmachineServices.complete#ReturnItem"
-                                in-map="[returnId:returnId, returnItemSeqId:returnItem.returnItemSeqId]"/></if>
+                    <if condition="testMachineReturnItem.statusId == 'ReturnReceived'">
+                        <service-call name="beiyelin.testmachine.TestMachineReturnServices.complete#TestMachineReturnItem"
+                                      in-map="[testMachineReturnId:testMachineReturnId, testMachineReturnItemSeqId:testMachineReturnItem.testMachineReturnItemSeqId]"/>
+                    </if>
                 </iterate>
 
                 <if condition="approvedOrderOut">
-                    <service-call name="mantle.order.OrderServices.set#OrderBillingShippingInfo"
-                            in-map="[orderId:approvedOrderOut.orderId, shippingPostalContactMechId:TestMachineReturnHeader.postalContactMechId,
+                    <service-call name="beiyelin.testmachine.TestMachineOrderServices.set#OrderBillingShippingInfo"
+                                  in-map="[testMachineOrderId:approvedOrderOut.testMachineOrderId, shippingPostalContactMechId:TestMachineReturnHeader.postalContactMechId,
                             shippingTelecomContactMechId:TestMachineReturnHeader.telecomContactMechId,
                             shippingFacilityId:TestMachineReturnHeader.facilityId, carrierPartyId:TestMachineReturnHeader.carrierPartyId,
                             shipmentMethodEnumId:TestMachineReturnHeader.shipmentMethodEnumId]"/>
                     <!-- place and approve order, come from here ready to ship -->
-                    <service-call name="mantle.order.OrderServices.place#Order" in-map="[orderId:approvedOrderOut.orderId]"/>
-                    <service-call name="mantle.order.OrderServices.approve#Order" in-map="[orderId:approvedOrderOut.orderId]"/>
+                    <service-call name="beiyelin.testmachine.TestMachineOrderServices.place#TestMachineOrder"
+                                  in-map="[testMachineOrderId:approvedOrderOut.testMachineOrderId]"/>
+                    <service-call name="beiyelin.testmachine.TestMachineOrderServices.approve#TestMachineOrder"
+                                  in-map="[testMachineOrderId:approvedOrderOut.testMachineOrderId]"/>
                 </if>
                 <if condition="placedOrderOut">
-                    <service-call name="mantle.order.OrderServices.set#OrderBillingShippingInfo"
-                            in-map="[orderId:placedOrderOut.orderId, shippingPostalContactMechId:TestMachineReturnHeader.postalContactMechId,
+                    <service-call name="beiyelin.testmachine.TestMachineOrderServices.set#OrderBillingShippingInfo"
+                                  in-map="[testMachineOrderId:placedOrderOut.testMachineOrderId, shippingPostalContactMechId:TestMachineReturnHeader.postalContactMechId,
                             shippingTelecomContactMechId:TestMachineReturnHeader.telecomContactMechId,
                             shippingFacilityId:TestMachineReturnHeader.facilityId, carrierPartyId:TestMachineReturnHeader.carrierPartyId,
                             shipmentMethodEnumId:TestMachineReturnHeader.shipmentMethodEnumId]"/>
                     <!-- place order only, will be approved later -->
-                    <service-call name="mantle.order.OrderServices.place#Order" in-map="[orderId:placedOrderOut.orderId]"/>
+                    <service-call name="beiyelin.testmachine.TestMachineOrderServices.place#TestMachineOrder"
+                                  in-map="[testMachineOrderId:placedOrderOut.testMachineOrderId]"/>
                 </if>
             </if>
 
             <!-- if there are one or more associated Replacement Orders in the Placed status and they now qualify for Approved then Approve -->
             <iterate list="originalReplacementOrderIdSet" entry="originalReplacementOrderId">
-                <entity-find-one entity-name="mantle.order.OrderHeader" value-field="replaceOrderHeader">
-                    <field-map field-name="orderId" from="originalReplacementOrderId"/></entity-find-one>
+                <entity-find-one entity-name="beiyelin.testmachine.TestMachineOrderHeader" value-field="replaceOrderHeader">
+                    <field-map field-name="testMachineOrderId" from="originalReplacementOrderId"/>
+                </entity-find-one>
                 <if condition="replaceOrderHeader == null">
-                    <log level="error" message="In process responses for return ${returnId} could not find replacement OrderHeader ${originalReplacementOrderId}"/>
+                    <log level="error"
+                         message="In process responses for return ${testMachineReturnId} could not find replacement OrderHeader ${originalReplacementOrderId}"/>
                     <continue/>
                 </if>
                 <if condition="replaceOrderHeader.statusId == 'OrderPlaced'">
-                    <set field="curOrderReturnItemList" from="returnItemList.findAll({ it.replacementOrderId == originalReplacementOrderId })"/>
+                    <set field="curOrderReturnItemList"
+                         from="testMachineReturnItemList.findAll({ it.replacementOrderId == originalReplacementOrderId })"/>
                     <set field="approveOrder" from="true"/>
                     <iterate list="curOrderReturnItemList" entry="curOrderReturnItem">
                         <if condition="!(curOrderReturnItem.statusId in ['ReturnReceived', 'ReturnCompleted'])">
@@ -1004,149 +1195,185 @@ along with this software (see the LICENSE.md file). If not, see
                         </if>
                     </iterate>
                     <if condition="approveOrder">
-                        <service-call name="mantle.order.OrderServices.approve#Order" in-map="[orderId:originalReplacementOrderId]"/>
+                        <service-call name="beiyelin.testmachine.TestMachineOrderServices.approve#TestMachineOrder"
+                                      in-map="[testMachineOrderId:originalReplacementOrderId]"/>
                     </if>
                 </if>
             </iterate>
 
             <!-- if returnInvoiceId set statusId to InvoiceApproved, trigger payment applications based on forInvoiceId -->
             <if condition="returnInvoiceId">
-                <service-call name="update#mantle.account.invoice.Invoice" in-map="[invoiceId:returnInvoiceId, statusId:'InvoiceApproved']"/>
+                <service-call name="update#mantle.account.invoice.Invoice"
+                              in-map="[invoiceId:returnInvoiceId, statusId:'InvoiceApproved']"/>
             </if>
         </actions>
     </service>
 
-    <service verb="cancel" noun="Return">
-        <description>Try to cancel all items, if all items cancelled then cancel header otherwise return error</description>
-        <in-parameters><parameter name="returnId" required="true"/></in-parameters>
-        <out-parameters><parameter name="statusId"/><parameter name="oldStatusId"/>
-            <parameter name="statusChanged" type="Boolean"/></out-parameters>
+    <service verb="cancel" noun="TestMachineReturn">
+        <description>Try to cancel all items, if all items cancelled then cancel header otherwise return error
+        </description>
+        <in-parameters>
+            <parameter name="testMachineReturnId" required="true"/>
+        </in-parameters>
+        <out-parameters>
+            <parameter name="statusId"/>
+            <parameter name="oldStatusId"/>
+            <parameter name="statusChanged" type="Boolean"/>
+        </out-parameters>
         <actions>
-            <entity-find-one entity-name="beiyelin.testmachine.TestMachineReturnHeader" value-field="TestMachineReturnHeader"/>
+            <entity-find-one entity-name="beiyelin.testmachine.TestMachineReturnHeader"
+                             value-field="TestMachineReturnHeader"/>
             <if condition="TestMachineReturnHeader.statusId == 'ReturnCancelled'">
-                <set field="statusId" value="ReturnCancelled"/><set field="oldStatusId" value="ReturnCancelled"/>
+                <set field="statusId" value="ReturnCancelled"/>
+                <set field="oldStatusId" value="ReturnCancelled"/>
                 <set field="statusChanged" from="false"/>
                 <return/>
             </if>
 
-            <entity-find entity-name="beiyelin.testmachine.ReturnItem" list="returnItemList">
-                <econdition field-name="returnId"/>
+            <entity-find entity-name="beiyelin.testmachine.TestMachineReturnItem" list="testMachineReturnItemList">
+                <econdition field-name="testMachineReturnId"/>
                 <econdition field-name="parentItemSeqId" operator="is-null"/>
             </entity-find>
-            <iterate list="returnItemList" entry="returnItem">
-                <service-call name="beiyelin.testmachineServices.cancel#ReturnItem" out-map="itemOut"
-                        in-map="[returnId:returnId, returnItemSeqId:returnItem.returnItemSeqId]"/>
+            <iterate list="testMachineReturnItemList" entry="testMachineReturnItem">
+                <service-call name="beiyelin.testmachine.TestMachineReturnServices.cancel#TestMachineReturnItem" out-map="itemOut"
+                              in-map="[testMachineReturnId:testMachineReturnId, testMachineReturnItemSeqId:testMachineReturnItem.testMachineReturnItemSeqId]"/>
             </iterate>
 
             <set field="statusId" value="ReturnCancelled"/>
             <service-call name="update#beiyelin.testmachine.TestMachineReturnHeader" out-map="context"
-                    in-map="[returnId:returnId, statusId:statusId]"/>
+                          in-map="[testMachineReturnId:testMachineReturnId, statusId:statusId]"/>
         </actions>
     </service>
-    <service verb="cancel" noun="ReturnItem">
-        <description>Cancel a ReturnItem, first cancelling all child items; returns error on invalid status transition</description>
-        <in-parameters><parameter name="returnId" required="true"/><parameter name="returnItemSeqId" required="true"/></in-parameters>
-        <out-parameters><parameter name="statusId"/><parameter name="oldStatusId"/>
-            <parameter name="statusChanged" type="Boolean"/></out-parameters>
+    <service verb="cancel" noun="TestMachineReturnItem">
+        <description>Cancel a TestMachineReturnItem, first cancelling all child items; returns error on invalid status
+            transition
+        </description>
+        <in-parameters>
+            <parameter name="testMachineReturnId" required="true"/>
+            <parameter name="testMachineReturnItemSeqId" required="true"/>
+        </in-parameters>
+        <out-parameters>
+            <parameter name="statusId"/>
+            <parameter name="oldStatusId"/>
+            <parameter name="statusChanged" type="Boolean"/>
+        </out-parameters>
         <actions>
-            <entity-find-one entity-name="beiyelin.testmachine.ReturnItem" value-field="returnItem"/>
-            <if condition="returnItem.statusId == 'ReturnCancelled'">
-                <set field="statusId" value="ReturnCancelled"/><set field="oldStatusId" value="ReturnCancelled"/>
+            <entity-find-one entity-name="beiyelin.testmachine.TestMachineReturnItem" value-field="testMachineReturnItem"/>
+            <if condition="testMachineReturnItem.statusId == 'ReturnCancelled'">
+                <set field="statusId" value="ReturnCancelled"/>
+                <set field="oldStatusId" value="ReturnCancelled"/>
                 <set field="statusChanged" from="false"/>
                 <return/>
             </if>
-            <if condition="!(returnItem.statusId in ['ReturnCreated', 'ReturnRequested', 'ReturnApproved'])">
-                <return error="true" message="Return item ${returnId}:${returnItemSeqId} in status ${returnItem.status?.description} cannot be cancelled"/></if>
+            <if condition="!(testMachineReturnItem.statusId in ['ReturnCreated', 'ReturnRequested', 'ReturnApproved'])">
+                <return error="true"
+                        message="TestMachineReturn item ${testMachineReturnId}:${testMachineReturnItemSeqId} in status ${testMachineReturnItem.status?.description} cannot be cancelled"/>
+            </if>
 
             <set field="statusId" value="ReturnCancelled"/>
 
             <!-- cancel child items first -->
-            <entity-find entity-name="beiyelin.testmachine.ReturnItem" list="childItemList">
-                <econdition field-name="returnId"/>
-                <econdition field-name="parentItemSeqId" from="returnItemSeqId"/>
+            <entity-find entity-name="beiyelin.testmachine.TestMachineReturnItem" list="childItemList">
+                <econdition field-name="testMachineReturnId"/>
+                <econdition field-name="parentItemSeqId" from="testMachineReturnItemSeqId"/>
             </entity-find>
             <iterate list="childItemList" entry="childItem">
-                <service-call name="beiyelin.testmachineServices.cancel#ReturnItem" out-map="itemOut"
-                        in-map="[returnId:returnId, returnItemSeqId:childItem.returnItemSeqId]"/>
+                <service-call name="beiyelin.testmachine.TestMachineReturnServices.cancel#TestMachineReturnItem" out-map="itemOut"
+                              in-map="[testMachineReturnId:testMachineReturnId, testMachineReturnItemSeqId:childItem.testMachineReturnItemSeqId]"/>
             </iterate>
 
             <!-- cancel this item -->
-            <service-call name="update#beiyelin.testmachine.ReturnItem" out-map="context"
-                    in-map="[returnId:returnId, returnItemSeqId:returnItemSeqId, statusId:statusId]"/>
+            <service-call name="update#beiyelin.testmachine.TestMachineReturnItem" out-map="context"
+                          in-map="[testMachineReturnId:testMachineReturnId, testMachineReturnItemSeqId:testMachineReturnItemSeqId, statusId:statusId]"/>
         </actions>
     </service>
 
-    <service verb="update" noun="ReturnItem">
+    <service verb="update" noun="TestMachineReturnItem">
         <in-parameters>
-            <parameter name="returnId" required="true"/>
-            <parameter name="returnItemSeqId" required="true"/>
-            <auto-parameters entity-name="beiyelin.testmachine.ReturnItem" include="nonpk">
+            <parameter name="testMachineReturnId" required="true"/>
+            <parameter name="testMachineReturnItemSeqId" required="true"/>
+            <auto-parameters entity-name="beiyelin.testmachine.TestMachineReturnItem" include="nonpk">
                 <!-- exclude automatically maintained fields -->
                 <exclude field-name="statusId"/>
-                <exclude field-name="responseDate"/><exclude field-name="responseAmount"/>
-                <exclude field-name="replacementOrderId"/><exclude field-name="finAccountTransId"/>
-                <exclude field-name="refundPaymentId"/><exclude field-name="invoiceId"/></auto-parameters>
+                <exclude field-name="responseDate"/>
+                <exclude field-name="responseAmount"/>
+                <exclude field-name="replacementOrderId"/>
+                <exclude field-name="finAccountTransId"/>
+                <exclude field-name="refundPaymentId"/>
+                <exclude field-name="invoiceId"/>
+            </auto-parameters>
         </in-parameters>
         <actions>
-            <entity-find-one entity-name="beiyelin.testmachine.ReturnItem" value-field="returnItem"/>
+            <entity-find-one entity-name="beiyelin.testmachine.TestMachineReturnItem" value-field="testMachineReturnItem"/>
             <!-- TODO further restrict fields updatable based on statusId (itemChangeable), responseAmount, etc; like restrictions on EditReturnItems screen
-            <set field="itemChangeable" from="returnItem.statusId in ['ReturnCreated', 'ReturnRequested', 'ReturnApproved']"/>
+            <set field="itemChangeable" from="testMachineReturnItem.statusId in ['ReturnCreated', 'ReturnRequested', 'ReturnApproved']"/>
             -->
 
             <!-- if responseImmediate set also set on child items -->
-            <if condition="responseImmediate &amp;&amp; responseImmediate != returnItem.responseImmediate">
-                <entity-find entity-name="beiyelin.testmachine.ReturnItem" list="childItemList">
-                    <econdition field-name="returnId"/>
-                    <econdition field-name="parentItemSeqId" from="returnItemSeqId"/>
+            <if condition="responseImmediate &amp;&amp; responseImmediate != testMachineReturnItem.responseImmediate">
+                <entity-find entity-name="beiyelin.testmachine.TestMachineReturnItem" list="childItemList">
+                    <econdition field-name="testMachineReturnId"/>
+                    <econdition field-name="parentItemSeqId" from="testMachineReturnItemSeqId"/>
                 </entity-find>
                 <iterate list="childItemList" entry="childItem">
-                    <service-call name="beiyelin.testmachineServices.update#ReturnItem"
-                            in-map="[returnId:returnId, returnItemSeqId:childItem.returnItemSeqId, responseImmediate:responseImmediate]"/>
+                    <service-call name="beiyelin.testmachine.TestMachineReturnServices.update#TestMachineReturnItem"
+                                  in-map="[testMachineReturnId:testMachineReturnId, testMachineReturnItemSeqId:childItem.testMachineReturnItemSeqId, responseImmediate:responseImmediate]"/>
                 </iterate>
             </if>
 
-            <service-call name="update#beiyelin.testmachine.ReturnItem" in-map="context"/>
+            <service-call name="update#beiyelin.testmachine.TestMachineReturnItem" in-map="context"/>
         </actions>
     </service>
-    <service verb="delete" noun="ReturnItem">
+    <service verb="delete" noun="TestMachineReturnItem">
         <in-parameters>
-            <parameter name="returnId" required="true"/>
-            <parameter name="returnItemSeqId" required="true"/>
+            <parameter name="testMachineReturnId" required="true"/>
+            <parameter name="testMachineReturnItemSeqId" required="true"/>
         </in-parameters>
         <actions>
-            <entity-find-one entity-name="beiyelin.testmachine.ReturnItem" value-field="returnItem"/>
-            <if condition="returnItem == null"><return error="true" message="Return item ${returnId}:${returnItemSeqId} not found"/></if>
-            <if condition="!(returnItem.statusId in ['ReturnCreated', 'ReturnRequested', 'ReturnCancelled'])">
-                <return error="true" message="Items may be deleted only when item is in Created, Requested, and Cancelled statuses"/></if>
+            <entity-find-one entity-name="beiyelin.testmachine.TestMachineReturnItem" value-field="testMachineReturnItem"/>
+            <if condition="testMachineReturnItem == null">
+                <return error="true"
+                        message="TestMachineReturn item ${testMachineReturnId}:${testMachineReturnItemSeqId} not found"/>
+            </if>
+            <if condition="!(testMachineReturnItem.statusId in ['ReturnCreated', 'ReturnRequested', 'ReturnCancelled'])">
+                <return error="true"
+                        message="Items may be deleted only when item is in Created, Requested, and Cancelled statuses"/>
+            </if>
 
-            <entity-find-one entity-name="beiyelin.testmachine.TestMachineReturnHeader" value-field="TestMachineReturnHeader"/>
+            <entity-find-one entity-name="beiyelin.testmachine.TestMachineReturnHeader"
+                             value-field="TestMachineReturnHeader"/>
             <if condition="!(TestMachineReturnHeader.statusId in ['ReturnCreated', 'ReturnRequested', 'ReturnCancelled'])">
-                <return error="true" message="Items may be deleted only when return is in Created, Requested, and Cancelled statuses"/></if>
+                <return error="true"
+                        message="Items may be deleted only when return is in Created, Requested, and Cancelled statuses"/>
+            </if>
 
             <!-- delete child items first -->
-            <entity-find entity-name="beiyelin.testmachine.ReturnItem" list="childItemList">
-                <econdition field-name="returnId"/>
-                <econdition field-name="parentItemSeqId" from="returnItemSeqId"/>
+            <entity-find entity-name="beiyelin.testmachine.TestMachineReturnItem" list="childItemList">
+                <econdition field-name="testMachineReturnId"/>
+                <econdition field-name="parentItemSeqId" from="testMachineReturnItemSeqId"/>
             </entity-find>
             <iterate list="childItemList" entry="childItem">
-                <service-call name="beiyelin.testmachineServices.delete#ReturnItem"
-                        in-map="[returnId:returnId, returnItemSeqId:childItem.returnItemSeqId]"/>
+                <service-call name="beiyelin.testmachine.TestMachineReturnServices.delete#TestMachineReturnItem"
+                              in-map="[testMachineReturnId:testMachineReturnId, testMachineReturnItemSeqId:childItem.testMachineReturnItemSeqId]"/>
             </iterate>
 
             <!-- delete the item -->
-            <service-call name="delete#beiyelin.testmachine.ReturnItem" in-map="[returnId:returnId, returnItemSeqId:returnItemSeqId]"/>
+            <service-call name="delete#beiyelin.testmachine.TestMachineReturnItem"
+                          in-map="[testMachineReturnId:testMachineReturnId, testMachineReturnItemSeqId:testMachineReturnItemSeqId]"/>
         </actions>
     </service>
 
     <!-- ============================================== -->
-    <!-- ========== Return Shipment Services ========== -->
+    <!-- ========== TestMachineReturn Shipment Services ========== -->
     <!-- ============================================== -->
 
-    <service verb="create" noun="ReturnShipment">
-        <description>Create a Shipment for items on a return using settings on TestMachineReturnHeader. Called by SECA rule when
-            Return is Approved.</description>
+    <service verb="create" noun="TestMachineReturnShipment">
+        <description>Create a Shipment for items on a return using settings on TestMachineReturnHeader. Called by SECA
+            rule when
+            TestMachineReturn is Approved.
+        </description>
         <in-parameters>
-            <parameter name="returnId" required="true"/>
+            <parameter name="testMachineReturnId" required="true"/>
             <parameter name="createPackage" type="Boolean" default="false"/>
         </in-parameters>
         <out-parameters>
@@ -1155,31 +1382,36 @@ along with this software (see the LICENSE.md file). If not, see
             <parameter name="shipmentRouteSegmentSeqId"/>
         </out-parameters>
         <actions>
-            <entity-find-one entity-name="beiyelin.testmachine.TestMachineReturnHeader" value-field="TestMachineReturnHeader"/>
+            <entity-find-one entity-name="beiyelin.testmachine.TestMachineReturnHeader"
+                             value-field="TestMachineReturnHeader"/>
 
             <!-- is this an outgoing Shipment (use ShpTpPurchaseReturn) or incoming (use ShpTpSalesReturn) order based on internal org? -->
             <!-- TODO: what to do if both are internal orgs? need a flag or something for which side we're dealing with... -->
             <entity-find-one entity-name="mantle.party.PartyRole" value-field="customerOrgInternal">
                 <field-map field-name="partyId" from="TestMachineReturnHeader.customerPartyId"/>
-                <field-map field-name="roleTypeId" value="OrgInternal"/></entity-find-one>
+                <field-map field-name="roleTypeId" value="OrgInternal"/>
+            </entity-find-one>
             <set field="shipmentTypeEnumId" from="customerOrgInternal ? 'ShpTpPurchaseReturn' : 'ShpTpSalesReturn'"/>
 
-            <if condition="customerOrgInternal"><then>
-                <set field="originFacilityId" from="TestMachineReturnHeader.facilityId"/>
-                <set field="destPostalContactMechId" from="TestMachineReturnHeader.postalContactMechId"/>
-                <set field="destTelecomContactMechId" from="TestMachineReturnHeader.telecomContactMechId"/>
-            </then><else>
-                <set field="destinationFacilityId" from="TestMachineReturnHeader.facilityId"/>
-                <set field="originPostalContactMechId" from="TestMachineReturnHeader.postalContactMechId"/>
-                <set field="originTelecomContactMechId" from="TestMachineReturnHeader.telecomContactMechId"/>
-            </else></if>
+            <if condition="customerOrgInternal">
+                <then>
+                    <set field="originFacilityId" from="TestMachineReturnHeader.facilityId"/>
+                    <set field="destPostalContactMechId" from="TestMachineReturnHeader.postalContactMechId"/>
+                    <set field="destTelecomContactMechId" from="TestMachineReturnHeader.telecomContactMechId"/>
+                </then>
+                <else>
+                    <set field="destinationFacilityId" from="TestMachineReturnHeader.facilityId"/>
+                    <set field="originPostalContactMechId" from="TestMachineReturnHeader.postalContactMechId"/>
+                    <set field="originTelecomContactMechId" from="TestMachineReturnHeader.telecomContactMechId"/>
+                </else>
+            </if>
 
             <set field="shipmentMethodEnumId" from="TestMachineReturnHeader.shipmentMethodEnumId"/>
             <set field="carrierPartyId" from="TestMachineReturnHeader.carrierPartyId"/>
 
             <!-- create Shipment and ShipmentRouteSegment records, get shipmentId -->
             <service-call name="mantle.shipment.ShipmentServices.create#Shipment" out-map="context"
-                    in-map="context + [shipmentTypeEnumId:shipmentTypeEnumId,
+                          in-map="context + [shipmentTypeEnumId:shipmentTypeEnumId,
                         fromPartyId:TestMachineReturnHeader.customerPartyId, toPartyId:TestMachineReturnHeader.vendorPartyId]"/>
 
             <if condition="createPackage">
@@ -1187,71 +1419,73 @@ along with this software (see the LICENSE.md file). If not, see
             </if>
             <if condition="shipmentPackageSeqId &amp;&amp; shipmentRouteSegmentSeqId">
                 <service-call name="create#mantle.shipment.ShipmentPackageRouteSeg"
-                        in-map="[shipmentId:shipmentId, shipmentPackageSeqId:shipmentPackageSeqId,
+                              in-map="[shipmentId:shipmentId, shipmentPackageSeqId:shipmentPackageSeqId,
                                 shipmentRouteSegmentSeqId:shipmentRouteSegmentSeqId]"/>
             </if>
 
-            <service-call name="beiyelin.testmachineServices.add#ReturnToShipment"
-                    in-map="[shipmentId:shipmentId, returnId:returnId]"/>
+            <service-call name="beiyelin.testmachine.TestMachineReturnServices.add#TestMachineReturnToShipment"
+                          in-map="[shipmentId:shipmentId, testMachineReturnId:testMachineReturnId]"/>
         </actions>
     </service>
-    <service verb="add" noun="ReturnToShipment">
+    <service verb="add" noun="TestMachineReturnToShipment">
         <in-parameters>
-            <parameter name="returnId" required="true"/>
+            <parameter name="testMachineReturnId" required="true"/>
             <parameter name="shipmentId" required="true"/>
         </in-parameters>
         <actions>
-            <entity-find entity-name="beiyelin.testmachine.ReturnItem" list="returnItemList">
-                <econdition field-name="returnId"/></entity-find>
+            <entity-find entity-name="beiyelin.testmachine.TestMachineReturnItem" list="testMachineReturnItemList">
+                <econdition field-name="testMachineReturnId"/>
+            </entity-find>
             <entity-find entity-name="mantle.shipment.ShipmentItemSource" list="allItemSisList">
-                <econdition field-name="returnId"/></entity-find>
+                <econdition field-name="testMachineReturnId"/>
+            </entity-find>
 
             <entity-find entity-name="moqui.basic.EnumGroupMember" list="productItemTypeEgms" cache="true">
-                <econdition field-name="enumGroupEnumId" value="EngItemsProduct"/></entity-find>
+                <econdition field-name="enumGroupEnumId" value="EngItemsProduct"/>
+            </entity-find>
             <set field="productItemTypes" from="productItemTypeEgms*.enumId"/>
 
-            <iterate list="returnItemList" entry="returnItem">
-                <if condition="returnItem.productId">
+            <iterate list="testMachineReturnItemList" entry="testMachineReturnItem">
+                <if condition="testMachineReturnItem.productId">
                     <!-- see if Product is a physical item -->
                     <entity-find-one entity-name="mantle.product.Product" value-field="product" cache="true">
-                        <field-map field-name="productId" from="returnItem.productId"/></entity-find-one>
+                        <field-map field-name="productId" from="testMachineReturnItem.productId"/>
+                    </entity-find-one>
 
-                    <set field="isProductItemType" from="returnItem.itemTypeEnumId in productItemTypes"/>
-                    <set field="isShippable" from="isProductItemType &amp;&amp; product != null ? product.productTypeEnumId in ['PtAsset', 'PtDigitalAsset', 'PtAssetUse', 'PtPickAssembly'] : false"/>
+                    <set field="isShippable"
+                         from="isProductItemType &amp;&amp; product != null ? product.productTypeEnumId in ['PtAsset', 'PtDigitalAsset', 'PtAssetUse', 'PtPickAssembly'] : false"/>
 
                     <if condition="isShippable">
-                        <set field="itemSisQuantity" from="allItemSisList.findAll({ it.returnItemSeqId == returnItem.returnItemSeqId })*.quantity.sum()"/>
-                        <set field="quantityToReceive" from="(returnItem.returnQuantity?:0.0) - (itemSisQuantity?:0.0)"/>
-                        <if condition="quantityToReceive == 0.0"><continue/></if>
+                        <set field="itemSisQuantity"
+                             from="allItemSisList.findAll({ it.testMachineReturnItemSeqId == testMachineReturnItem.testMachineReturnItemSeqId })*.quantity.sum()"/>
+                        <set field="quantityToReceive"
+                             from="(testMachineReturnItem.returnQuantity?:0.0) - (itemSisQuantity?:0.0)"/>
+                        <if condition="quantityToReceive == 0.0">
+                            <continue/>
+                        </if>
 
                         <!-- see if there is already a ShipmentItem for the product -->
                         <entity-find-one entity-name="mantle.shipment.ShipmentItem" value-field="shipmentItem">
-                            <field-map field-name="shipmentId"/><field-map field-name="productId" from="returnItem.productId"/></entity-find-one>
-                        <if condition="shipmentItem"><then>
-                            <set field="shipmentItem.quantity" from="shipmentItem.quantity + quantityToReceive"/>
-                            <entity-update value-field="shipmentItem"/>
-                        </then><else>
-                            <service-call name="create#mantle.shipment.ShipmentItem"
-                                    in-map="[shipmentId:shipmentId, productId:returnItem.productId, quantity:quantityToReceive]"/>
-                        </else></if>
+                            <field-map field-name="shipmentId"/>
+                            <field-map field-name="productId" from="testMachineReturnItem.productId"/>
+                        </entity-find-one>
+                        <if condition="shipmentItem">
+                            <then>
+                                <set field="shipmentItem.quantity" from="shipmentItem.quantity + quantityToReceive"/>
+                                <entity-update value-field="shipmentItem"/>
+                            </then>
+                            <else>
+                                <service-call name="create#mantle.shipment.ShipmentItem"
+                                              in-map="[shipmentId:shipmentId, productId:testMachineReturnItem.productId, quantity:quantityToReceive]"/>
+                            </else>
+                        </if>
 
                         <service-call name="create#mantle.shipment.ShipmentItemSource"
-                                in-map="[shipmentId:shipmentId, productId:returnItem.productId, statusId:'SisPending',
+                                      in-map="[shipmentId:shipmentId, productId:testMachineReturnItem.productId, statusId:'SisPending',
                                     quantity:quantityToReceive, quantityNotHandled:quantityToReceive,
-                                    returnId:returnItem.returnId, returnItemSeqId:returnItem.returnItemSeqId]"/>
+                                    testMachineReturnId:testMachineReturnItem.testMachineReturnId, testMachineReturnItemSeqId:testMachineReturnItem.testMachineReturnItemSeqId]"/>
 
-                        <!-- for existing ReturnItemBilling set the shipmentId on it -->
-                        <set field="quantityNotBilled" from="quantityToReceive"/>
-                        <entity-find entity-name="beiyelin.testmachine.ReturnItemBilling" list="returnItemBillingList">
-                            <econdition field-name="returnId"/><econdition field-name="returnItemSeqId" from="returnItem.returnItemSeqId"/>
-                        </entity-find>
-                        <iterate list="returnItemBillingList" entry="returnItemBilling">
-                            <if condition="!returnItemBilling.shipmentId &amp;&amp; quantityNotBilled >= returnItemBilling.quantity">
-                                <set field="returnItemBilling.shipmentId" from="shipmentId"/>
-                                <entity-update value-field="returnItemBilling"/>
-                                <set field="quantityNotBilled" from="quantityNotBilled - returnItemBilling.quantity"/>
-                            </if>
-                        </iterate>
+
                         <!-- if quantityNotBilled > 0 do anything here? we don't have another Invoice/Item with quantity to match... -->
                     </if>
                 </if>
@@ -1277,14 +1511,16 @@ along with this software (see the LICENSE.md file). If not, see
             <parameter name="customerPartyId" required="true"/>
         </in-parameters>
         <out-parameters>
-            <parameter name="returnId"/>
+            <parameter name="testMachineReturnId"/>
             <parameter name="newOrderId"/>
             <parameter name="newShipmentId"/>
         </out-parameters>
         <actions>
-            <service-call name="beiyelin.testmachineServices.return#Shipment" in-map="context" out-map="context"/>
-            <service-call name="beiyelin.testmachineServices.resell#Shipment" in-map="context" out-map="context"/>
-            <message>Shipment ${shipmentId} returned in Return ${returnId}, resold in Order ${newOrderId} and inventory issued to Shipment ${newShipmentId}</message>
+            <service-call name="beiyelin.testmachine.TestMachineReturnServices.return#Shipment" in-map="context" out-map="context"/>
+            <service-call name="beiyelin.testmachine.TestMachineReturnServices.resell#Shipment" in-map="context" out-map="context"/>
+            <message>Shipment ${shipmentId} returned in TestMachineReturn ${testMachineReturnId}, resold in TestMachineOrder
+                ${newOrderId} and inventory issued to Shipment ${newShipmentId}
+            </message>
         </actions>
     </service>
     <service verb="return" noun="Shipment">
@@ -1299,46 +1535,54 @@ along with this software (see the LICENSE.md file). If not, see
             <parameter name="responseImmediate"/>
         </in-parameters>
         <out-parameters>
-            <parameter name="returnId"/>
+            <parameter name="testMachineReturnId"/>
         </out-parameters>
         <actions>
             <entity-find-one entity-name="mantle.shipment.Shipment" value-field="shipment"/>
             <if condition="!(shipment.shipmentTypeEnumId in ['ShpTpSales', 'ShpTpPurchase'])">
-                <return error="true" message="Shipment ${shipmentId} is not a Sales or Purchase shipment"/></if>
+                <return error="true" message="Shipment ${shipmentId} is not a Sales or Purchase shipment"/>
+            </if>
             <if condition="!(shipment.statusId in ['ShipPacked', 'ShipShipped'])">
-                <return error="true" message="Shipment ${shipmentId} is not in the Packed or Shipped status"/></if>
+                <return error="true" message="Shipment ${shipmentId} is not in the Packed or Shipped status"/>
+            </if>
 
             <set field="vendorPartyId" from="shipment.fromPartyId"/>
             <set field="customerPartyId" from="shipment.toPartyId"/>
 
             <!-- get contact info from ShipmentRouteSegment -->
             <entity-find entity-name="mantle.shipment.ShipmentRouteSegment" list="srsList">
-                <econdition field-name="shipmentId"/></entity-find>
+                <econdition field-name="shipmentId"/>
+            </entity-find>
             <set field="srs" from="srsList[0]"/>
             <entity-find-one entity-name="mantle.party.PartyRole" value-field="customerOrgInternal">
                 <field-map field-name="partyId" from="customerPartyId"/>
-                <field-map field-name="roleTypeId" value="OrgInternal"/></entity-find-one>
-            <if condition="customerOrgInternal"><then>
-                <set field="facilityId" from="srs.destinationFacilityId"/>
-                <set field="postalContactMechId" from="srs.originPostalContactMechId"/>
-                <set field="telecomContactMechId" from="srs.originTelecomContactMechId"/>
-            </then><else>
-                <set field="facilityId" from="srs.originFacilityId"/>
-                <set field="postalContactMechId" from="srs.destPostalContactMechId"/>
-                <set field="telecomContactMechId" from="srs.destTelecomContactMechId"/>
-            </else></if>
+                <field-map field-name="roleTypeId" value="OrgInternal"/>
+            </entity-find-one>
+            <if condition="customerOrgInternal">
+                <then>
+                    <set field="facilityId" from="srs.destinationFacilityId"/>
+                    <set field="postalContactMechId" from="srs.originPostalContactMechId"/>
+                    <set field="telecomContactMechId" from="srs.originTelecomContactMechId"/>
+                </then>
+                <else>
+                    <set field="facilityId" from="srs.originFacilityId"/>
+                    <set field="postalContactMechId" from="srs.destPostalContactMechId"/>
+                    <set field="telecomContactMechId" from="srs.destTelecomContactMechId"/>
+                </else>
+            </if>
 
             <!-- create TestMachineReturnHeader -->
-            <service-call name="beiyelin.testmachineServices.create#Return" out-map="context"
-                    in-map="[vendorPartyId:vendorPartyId, customerPartyId:customerPartyId, facilityId:facilityId,
+            <service-call name="beiyelin.testmachine.TestMachineReturnServices.create#TestMachineReturn" out-map="context"
+                          in-map="[vendorPartyId:vendorPartyId, customerPartyId:customerPartyId, facilityId:facilityId,
                         postalContactMechId:postalContactMechId, telecomContactMechId:telecomContactMechId]"/>
 
             <!-- add return items for order items from ShipmentItemSource records -->
             <entity-find entity-name="mantle.shipment.ShipmentItemSource" list="sisList">
-                <econdition field-name="shipmentId"/></entity-find>
+                <econdition field-name="shipmentId"/>
+            </entity-find>
             <iterate list="sisList" entry="sis">
-                <service-call name="beiyelin.testmachineServices.add#OrderItemToReturn" in-map="[returnId:returnId,
-                        orderId:sis.orderId, orderItemSeqId:sis.orderItemSeqId, returnQuantity:sis.quantity,
+                <service-call name="beiyelin.testmachine.TestMachineReturnServices.add#TestMachineOrderItemToTestMachineReturn" in-map="[testMachineReturnId:testMachineReturnId,
+                        testMachineOrderId:sis.testMachineOrderId, testMachineOrderItemSeqId:sis.testMachineOrderItemSeqId, returnQuantity:sis.quantity,
                         returnReasonEnumId:returnReasonEnumId, returnResponseEnumId:returnResponseEnumId,
                         responseImmediate:responseImmediate]"/>
             </iterate>
@@ -1363,47 +1607,54 @@ along with this software (see the LICENSE.md file). If not, see
         <actions>
             <entity-find-one entity-name="mantle.shipment.Shipment" value-field="shipment"/>
             <if condition="shipment.shipmentTypeEnumId != 'ShpTpSales'">
-                <return error="true" message="Shipment ${shipmentId} is not a Sales shipment"/></if>
+                <return error="true" message="Shipment ${shipmentId} is not a Sales shipment"/>
+            </if>
             <if condition="!(shipment.statusId in ['ShipPacked', 'ShipShipped'])">
-                <return error="true" message="Shipment ${shipmentId} is not in the Packed or Shipped status"/></if>
+                <return error="true" message="Shipment ${shipmentId} is not in the Packed or Shipped status"/>
+            </if>
 
             <set field="vendorPartyId" from="shipment.fromPartyId"/>
 
             <!-- get origin facility from ShipmentRouteSegment -->
             <entity-find entity-name="mantle.shipment.ShipmentRouteSegment" list="srsList">
-                <econdition field-name="shipmentId"/></entity-find>
+                <econdition field-name="shipmentId"/>
+            </entity-find>
             <set field="srs" from="srsList[0]"/>
             <set field="facilityId" from="srs.originFacilityId"/>
 
             <!-- NOTE: don't set postalContactMechId or telecomContactMechId, those were for the other customer -->
 
-            <!-- create Order -->
-            <service-call name="mantle.order.OrderServices.create#Order" out-map="ordOut"
-                    in-map="[vendorPartyId:vendorPartyId, customerPartyId:customerPartyId, facilityId:facilityId]"/>
-            <set field="newOrderId" from="ordOut.orderId"/>
+            <!-- create TestMachineOrder -->
+            <service-call name="beiyelin.testmachine.TestMachineOrderServices.create#TestMachineOrder" out-map="ordOut"
+                          in-map="[vendorPartyId:vendorPartyId, customerPartyId:customerPartyId, facilityId:facilityId]"/>
+            <set field="newOrderId" from="ordOut.testMachineOrderId"/>
 
             <!-- add order items for shipment items records -->
             <entity-find entity-name="mantle.shipment.ShipmentItem" list="shipmentItemList">
-                <econdition field-name="shipmentId"/></entity-find>
+                <econdition field-name="shipmentId"/>
+            </entity-find>
             <iterate list="shipmentItemList" entry="shipmentItem">
-                <service-call name="mantle.order.OrderServices.add#OrderProductQuantity" in-map="[orderId:newOrderId,
+                <service-call name="beiyelin.testmachine.TestMachineOrderServices.add#OrderProductQuantity" in-map="[testMachineOrderId:newOrderId,
                         productId:shipmentItem.productId, quantity:shipmentItem.quantity]"/>
             </iterate>
 
             <!-- create new shipment for order -->
             <service-call name="mantle.shipment.ShipmentServices.create#OrderPartShipment"
-                    in-map="[orderId:ordOut.orderId, orderPartSeqId:ordOut.orderPartSeqId]" out-map="shipOut"/>
+                          in-map="[testMachineOrderId:ordOut.testMachineOrderId, orderPartSeqId:ordOut.orderPartSeqId]"
+                          out-map="shipOut"/>
             <set field="newShipmentId" from="shipOut.shipmentId"/>
 
             <!-- reject original shipment -->
-            <service-call name="update#mantle.shipment.Shipment" in-map="[shipmentId:shipmentId, statusId:'ShipRejected']"/>
+            <service-call name="update#mantle.shipment.Shipment"
+                          in-map="[shipmentId:shipmentId, statusId:'ShipRejected']"/>
 
             <!-- reallocate inventory to new shipment -->
             <service-call name="mantle.product.AssetServices.move#IssuancesToNewShipment"
-                    in-map="[shipmentId:shipmentId, newOrderId:newOrderId, newShipmentId:newShipmentId]"/>
+                          in-map="[shipmentId:shipmentId, newOrderId:newOrderId, newShipmentId:newShipmentId]"/>
 
             <!-- set shipment picked (don't set to packed until after manual order update, set prices/etc as needed) -->
-            <service-call name="update#mantle.shipment.Shipment" in-map="[shipmentId:newShipmentId, statusId:'ShipPicked']"/>
+            <service-call name="update#mantle.shipment.Shipment"
+                          in-map="[shipmentId:newShipmentId, statusId:'ShipPicked']"/>
         </actions>
     </service>
 </services>

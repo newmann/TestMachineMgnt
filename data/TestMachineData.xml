@@ -13,5 +13,15 @@ along with this software (see the LICENSE.md file). If not, see
 <http://creativecommons.org/publicdomain/zero/1.0/>.
 -->
 <entity-facade-xml type="seed-initial">
-    <moqui.basic.Enumeration description="样机" enumId="AsTpTestMachine" enumTypeId="AssetType"/>
+    <moqui.basic.Enumeration description="Test Machine" enumId="AsTpTestMachine" enumTypeId="AssetType"/>
+    <moqui.basic.LocalizedEntityField entityName="moqui.basic.Enumeration" fieldName="description"
+                                      pkValue="AsTpTestMachine" locale="zh_CN" localized="样机" />
+
+    <moqui.basic.Enumeration description="Test Machine" enumId="AsClsTestMachine" enumTypeId="AssetClass"/>
+    <moqui.basic.LocalizedEntityField entityName="moqui.basic.Enumeration" fieldName="description"
+                                      pkValue="AsClsTestMachine" locale="zh_CN" localized="样机" />
+
+    <moqui.basic.Enumeration description="Test Machine" enumId="PclsTestMachine" enumTypeId="ProductClass"/>
+    <moqui.basic.LocalizedEntityField entityName="moqui.basic.Enumeration" fieldName="description"
+                                      pkValue="PclsTestMachine" locale="zh_CN" localized="样机" />
 </entity-facade-xml>
