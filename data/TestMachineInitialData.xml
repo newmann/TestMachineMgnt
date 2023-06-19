@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+This software is in the public domain under CC0 1.0 Universal plus a 
+Grant of Patent License.
+
+To the extent possible under law, the author(s) have dedicated all
+copyright and related and neighboring rights to this software to the
+public domain worldwide. This software is distributed without any
+warranty.
+
+You should have received a copy of the CC0 Public Domain Dedication
+along with this software (see the LICENSE.md file). If not, see
+<http://creativecommons.org/publicdomain/zero/1.0/>.
+-->
+<entity-facade-xml type="seed-initial">
+    <moqui.basic.Enumeration description="Test Machine" enumId="AsTpTestMachine" enumTypeId="AssetType"/>
+    <moqui.basic.LocalizedEntityField entityName="moqui.basic.Enumeration" fieldName="description"
+                                      pkValue="AsTpTestMachine" locale="zh_CN" localized="样机" />
+
+    <moqui.basic.Enumeration description="Test Machine" enumId="AsClsTestMachine" enumTypeId="AssetClass"/>
+    <moqui.basic.LocalizedEntityField entityName="moqui.basic.Enumeration" fieldName="description"
+                                      pkValue="AsClsTestMachine" locale="zh_CN" localized="样机" />
+
+    <moqui.basic.Enumeration description="Test Machine" enumId="PclsTestMachine" enumTypeId="ProductClass"/>
+    <moqui.basic.LocalizedEntityField entityName="moqui.basic.Enumeration" fieldName="description"
+                                      pkValue="PclsTestMachine" locale="zh_CN" localized="样机" />
+
+    <moqui.basic.Enumeration description="Test Machine" enumId="ItemTestMachine" enumTypeId="ItemType"/>
+    <moqui.basic.LocalizedEntityField entityName="moqui.basic.Enumeration" fieldName="description"
+                                      pkValue="ItemTestMachine" locale="zh_CN" localized="样机" />
+
+<!--    将ItemTestMachine添加到EngItemsProduct中，在订单中和虚拟产品区分开来-->
+    <moqui.basic.EnumGroupMember enumId="ItemTestMachine" enumGroupEnumId="EngItemsProduct"/>
+
+<!--    <moqui.basic.Enumeration description="Take Back Test Machine" enumId="RrsnTestMachineTakeBack" enumTypeId="ReturnReason"/>-->
+<!--    <moqui.basic.LocalizedEntityField entityName="moqui.basic.Enumeration" fieldName="description"-->
+<!--                                      pkValue="RrsnTestMachineTakeBack" locale="zh_CN" localized="样机收回" />-->
+
+    <mantle.party.RoleType description="Test Party" roleTypeId="TestParty"/>
+    <moqui.basic.LocalizedEntityField entityName="mantle.party.RoleType" fieldName="description"
+                                      pkValue="TestParty" locale="zh_CN" localized="测试方" />
+<!--Shipment Type-->
+    <moqui.basic.Enumeration description="TestMachine Request Shipment" parentEnumId="ShpTpOutgoing" enumId="ShpTpTestMachineRequest" enumTypeId="ShipmentType"/>
+    <moqui.basic.Enumeration description="TestMachine Purchase Shipment" parentEnumId="ShpTpIncoming" enumId="ShpTpTestMachinePurchase" enumTypeId="ShipmentType"/>
+    <moqui.basic.Enumeration description="TestMachine Take Back Shipment" parentEnumId="ShpTpIncoming" enumId="ShpTpTestMachineTakeBack" enumTypeId="ShipmentType"/>
+
+    <moqui.basic.LocalizedEntityField entityName="moqui.basic.Enumeration" fieldName="description"
+                                      pkValue="ShpTpTestMachineRequest" locale="zh_CN" localized="样机申请发货" />
+
+    <moqui.basic.LocalizedEntityField entityName="moqui.basic.Enumeration" fieldName="description"
+                                      pkValue="ShpTpTestMachinePurchase" locale="zh_CN" localized="样机采购收货" />
+
+    <moqui.basic.LocalizedEntityField entityName="moqui.basic.Enumeration" fieldName="description"
+                                      pkValue="ShpTpTestMachineTakeBack" locale="zh_CN" localized="样机回收收货" />
+
+</entity-facade-xml>

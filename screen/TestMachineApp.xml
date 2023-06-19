@@ -31,15 +31,19 @@ along with this software (see the LICENSE.md file). If not, see
     <subscreens default-item="dashboard" always-use-full-path="true">
         <subscreens-item name="QuickSearch" location="component://SimpleScreens/screen/SimpleScreens/QuickSearch.xml" menu-index="2"/>
 
-        <subscreens-item name="Catalog" location="component://SimpleScreens/screen/SimpleScreens/Catalog.xml" menu-index="10"/>
-        <subscreens-item name="Asset" location="component://SimpleScreens/screen/SimpleScreens/Asset.xml" menu-index="10"/>
-        <subscreens-item name="Facility" location="component://SimpleScreens/screen/SimpleScreens/Facility.xml" menu-index="10"/>
+        <subscreens-item name="Catalog" location="component://SimpleScreens/screen/SimpleScreens/Catalog.xml" menu-index="3"/>
 
-        <subscreens-item name="Customer" location="component://SimpleScreens/screen/SimpleScreens/Customer.xml" menu-index="10"/>
-        <subscreens-item name="Party" location="component://SimpleScreens/screen/SimpleScreens/Party.xml" menu-index="10"/>
-        <subscreens-item name="Supplier" location="component://SimpleScreens/screen/SimpleScreens/Supplier.xml" menu-index="10"/>
-        <subscreens-item name="Shipment" location="component://SimpleScreens/screen/SimpleScreens/Shipment.xml" menu-index="10"/>
+        <subscreens-item name="Asset" location="component://TestMachineMgnt/screen/TestMachineApp/Asset.xml" menu-index="4"/>
 
+        <subscreens-item name="Facility" location="component://SimpleScreens/screen/SimpleScreens/Facility.xml" menu-index="5"/>
+
+        <subscreens-item name="Customer" location="component://SimpleScreens/screen/SimpleScreens/Customer.xml" menu-index="6"/>
+        <subscreens-item name="Party" location="component://SimpleScreens/screen/SimpleScreens/Party.xml" menu-index="7"/>
+        <subscreens-item name="Supplier" location="component://SimpleScreens/screen/SimpleScreens/Supplier.xml" menu-index="8"/>
+        <subscreens-item name="Accounting" location="component://SimpleScreens/screen/SimpleScreens/Accounting.xml" menu-index="9"/>
+
+        <subscreens-item name="TestMachineOrder" location="component://TestMachineMgnt/screen/TestMachineApp/TestMachineOrder.xml" menu-include="false"/>
+        <subscreens-item name="TestMachineReturn" location="component://TestMachineMgnt/screen/TestMachineApp/TestMachineReturn.xml" menu-include="false"/>
     </subscreens>
 
     <widgets>

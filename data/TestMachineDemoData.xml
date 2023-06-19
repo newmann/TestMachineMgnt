@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+This software is in the public domain under CC0 1.0 Universal plus a
+Grant of Patent License.
+
+To the extent possible under law, the author(s) have dedicated all
+copyright and related and neighboring rights to this software to the
+public domain worldwide. This software is distributed without any
+warranty.
+
+You should have received a copy of the CC0 Public Domain Dedication
+along with this software (see the LICENSE.md file). If not, see
+<http://creativecommons.org/publicdomain/zero/1.0/>.
+-->
+<entity-facade-xml type="demo">
+    <!-- NOTE: 样机管理需要的一些测试数据 -->
+
+
+    <!-- 客戶經理 暂时先都放在管理员组中-->
+
+    <parties partyId="100102" pseudoId="Newmann" partyTypeEnumId="PtyPerson">
+        <person firstName="新生" middleName="" lastName="胡"/>
+        <roles roleTypeId="Employee"/>
+        <users userId="NewmannHU" username="newmann.hu" userFullName="Newmann HU"
+                currentPassword="16ac58bbfa332c1c55bd98b53e60720bfa90d394" passwordHashType="SHA"
+                passwordHint="framework name, lowercase" currencyUomId="CNY" locale="zh_CN" timeZone="Asia/ShangHai"
+                emailAddress="xinsheng_hu@aisino-wincor.org">
+            <groups userGroupId="ADMIN" fromDate="2023-01-01" />
+            <groups userGroupId="ALL_USERS" fromDate="2023-01-01"/>
+        </users>
+    </parties>
+
+    <!-- 客戶，组织 -->
+    <parties partyId="100103"  pseudoId="Haagen-Dazs" partyTypeEnumId="PtyOrganization">
+        <Organization organizationName="哈根达斯"/>
+        <roles roleTypeId="Customer"/>
+        <mantle.party.contact.ContactMech contactMechId="CustHaagenDazsTeln" contactMechTypeEnumId="CmtTelecomNumber">
+            <telecomNumber countryCode="86" areaCode="021" contactNumber="22237777"/>
+            <parties contactMechPurposeId="PhonePrimary" fromDate="1265184000000" allowSolicitation="Y"/>
+        </mantle.party.contact.ContactMech>
+
+        <mantle.party.contact.ContactMech contactMechId="CustHaagenDazsAddr" contactMechTypeEnumId="CmtPostalAddress">
+            <postalAddress toName="小哈" attnName="" address1="虹桥路355号城开大厦8楼" address2="" unitNumber="355"
+                           city="上海" stateProvinceGeoId="CHN_31" countryGeoId="CHN"
+                           telecomContactMechId="CustHaagenDazsTeln"/>
+            <parties contactMechPurposeId="PostalPrimary" fromDate="1265184000000"/>
+        </mantle.party.contact.ContactMech>
+    </parties>
+    <parties partyId="100104"  pseudoId="北国先天下" partyTypeEnumId="PtyOrganization">
+        <Organization organizationName="北国先天下"/>
+        <roles roleTypeId="Customer"/>
+        <mantle.party.contact.ContactMech contactMechId="CustBeiGuoTeln" contactMechTypeEnumId="CmtTelecomNumber">
+            <telecomNumber countryCode="86" areaCode="0311" contactNumber="23456789"/>
+            <parties contactMechPurposeId="PhonePrimary" fromDate="1265184000000" allowSolicitation="Y"/>
+        </mantle.party.contact.ContactMech>
+
+        <mantle.party.contact.ContactMech contactMechId="CustBeiGuoAddr" contactMechTypeEnumId="CmtPostalAddress">
+            <postalAddress toName="Joe Q. Public" attnName="" address1="石家庄市桥西区建设南大街中山东路188号" address2="" unitNumber="188"
+                           city="shijiazhuang" stateProvinceGeoId="CHN_1301" countryGeoId="CHN"
+                           telecomContactMechId="CustBeiGuoTeln"/>
+            <parties contactMechPurposeId="PostalPrimary" fromDate="1265184000000"/>
+        </mantle.party.contact.ContactMech>
+    </parties>
+
+    <!-- 仓库&展厅 -->
+    <facilities facilityId="100002" pseudoId="9050" facilityTypeEnumId="FcTpWarehouse" facilityName="9050仓库">
+
+    </facilities>
+    <facilities facilityId="100000" pseudoId="BJ-hall" facilityTypeEnumId="FcTpRoom" facilityName="航信北京展厅">
+
+    </facilities>
+    <facilities facilityId="100001" pseudoId="minrun-hall" facilityTypeEnumId="FcTpRoom" facilityName="上海民润展厅">
+
+    </facilities>
+
+    <!-- 产品分类，型号为产品小类，物料号为产品代码，先采用产品目录PctCatalog来管理 -->
+    <moqui.basic.Enumeration description="样机" enumId="PctTestMachine" enumTypeId="ProductCategoryType"/>
+
+    <categories productCategoryId="SelfProduct" productCategoryTypeEnumId="PctCatalog" categoryName="自有产品">
+    </categories>
+
+    <categories productCategoryId="SelfPOS" productCategoryTypeEnumId="PctCatalog" categoryName="自有收款机">
+    </categories>
+    <categories productCategoryId="SelfPeripheral" productCategoryTypeEnumId="PctCatalog" categoryName="自有外设">
+    </categories>
+    <mantle.product.category.ProductCategoryRollup productCategoryId="SelfPOS" 
+    	parentProductCategoryId="SelfProduct" fromDate="2022-11-01">
+    </mantle.product.category.ProductCategoryRollup>
+    <mantle.product.category.ProductCategoryRollup productCategoryId="SelfPeripheral" 
+    	parentProductCategoryId="SelfProduct" fromDate="2022-11-01">
+    </mantle.product.category.ProductCategoryRollup>
+        
+    <categories productCategoryId="AW-I-318" productCategoryTypeEnumId="PctCatalog" categoryName="AW I-318">
+    </categories>
+    <categories productCategoryId="AW-I-316" productCategoryTypeEnumId="PctCatalog" categoryName="AW I-316">
+    </categories>
+    <categories productCategoryId="AW-I-328" productCategoryTypeEnumId="PctCatalog" categoryName="AW I-328">
+    </categories>
+    <categories productCategoryId="AW-I-172" productCategoryTypeEnumId="PctCatalog" categoryName="AW I-172">
+    </categories>
+    
+    <mantle.product.category.ProductCategoryRollup productCategoryId="AW-I-318" 
+    	parentProductCategoryId="SelfPOS" fromDate="2022-11-01">
+    </mantle.product.category.ProductCategoryRollup>
+    <mantle.product.category.ProductCategoryRollup productCategoryId="AW-I-316" 
+    	parentProductCategoryId="SelfPOS" fromDate="2022-11-01">
+    </mantle.product.category.ProductCategoryRollup>
+    <mantle.product.category.ProductCategoryRollup productCategoryId="AW-I-328" 
+    	parentProductCategoryId="SelfPOS" fromDate="2022-11-01">
+    </mantle.product.category.ProductCategoryRollup>
+    <mantle.product.category.ProductCategoryRollup productCategoryId="AW-I-172" 
+    	parentProductCategoryId="SelfPOS" fromDate="2022-11-01">
+    </mantle.product.category.ProductCategoryRollup>
+
+    <categories productCategoryId="3PartyProduct" productCategoryTypeEnumId="PctCatalog" categoryName="第三方产品">
+    </categories>
+    
+   	<!-- 物料号为产品代码,产品组合 -->
+    <products productId="100102" pseudoId="WA01900001032" productTypeEnumId="PtAsset" productName="AW I-318 标配" 
+	    description="AW I-318：D921 主板，Intel® Celeron® N3160，Fan less cooler，4GB RAM ，500GB HDD ,主屏电阻触摸屏 ,  刷卡器  ,第二屏10.1”非触摸显示器  " >
+	    <categories productCategoryId="AW-I-318" fromDate="2022-11-01"/>
+    </products>  
+     
+    <products productId="100103" pseudoId="WA01900001030" productTypeEnumId="PtAsset" productName="AW I-318 配置2" 
+	    description="AW I-318 ,AIO POS System ,15“ R Touch 显示器，N3160 CPU ,三轨刷卡器，VFD 客显,RAM 4G , 500GB HDD" >
+	    <categories productCategoryId="AW-I-318" fromDate="2022-11-01"/>
+    </products>      
+    
+    <products productId="100000" pseudoId="WA01940000448" productTypeEnumId="PtAsset" productName="AW I-328 标配" 
+	    description="AW I-328-触控一体机，J1900-8G-256G" >
+	    <categories productCategoryId="AW-I-328" fromDate="2022-11-01"/>
+    </products>
+
+    <moqui.basic.email.EmailServer emailServerId="SYSTEM"
+        smtpHost="smtp.qq.com" smtpPort="587" smtpStartTls="Y" smtpSsl="N"
+        storeHost="imap.qq.com" storePort="993" storeProtocol="imaps" storeFolder=""
+        storeDelete="N" storeMarkSeen="Y" storeSkipSeen="Y"
+        mailUsername="newmannhu@qq.com" mailPassword="wqeqwyrquatsbica"
+    />
+    <moqui.basic.email.EmailServer emailServerId="MOQUI_LOCAL"
+                                   smtpHost="smtp.qq.com" smtpPort="587" smtpStartTls="Y" smtpSsl="N"
+                                   storeHost="imap.qq.com" storePort="993" storeProtocol="imaps" storeFolder=""
+                                   storeDelete="N" storeMarkSeen="Y" storeSkipSeen="Y"
+                                   mailUsername="newmannhu@qq.com" mailPassword="wqeqwyrquatsbica"
+    />
+</entity-facade-xml>
