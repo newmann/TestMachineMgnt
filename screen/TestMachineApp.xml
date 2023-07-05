@@ -42,8 +42,20 @@ along with this software (see the LICENSE.md file). If not, see
         <subscreens-item name="Supplier" location="component://SimpleScreens/screen/SimpleScreens/Supplier.xml" menu-index="8"/>
         <subscreens-item name="Accounting" location="component://SimpleScreens/screen/SimpleScreens/Accounting.xml" menu-index="9"/>
 
-        <subscreens-item name="TestMachineOrder" location="component://TestMachineMgnt/screen/TestMachineApp/TestMachineOrder.xml" menu-include="false"/>
-        <subscreens-item name="TestMachineReturn" location="component://TestMachineMgnt/screen/TestMachineApp/TestMachineReturn.xml" menu-include="false"/>
+        <subscreens-item name="Order" location="component://TestMachineMgnt/screen/TestMachineApp/Order.xml" menu-index="10"/>
+        <subscreens-item name="Return" location="component://TestMachineMgnt/screen/TestMachineApp/Return.xml" menu-index="11"/>
+        <subscreens-item name="TakeBackOrder" location="component://TestMachineMgnt/screen/TestMachineApp/TestMachineTakeBackOrder.xml" menu-index="11"/>
+
+        <subscreens-item name="Shipment" location="component://TestMachineMgnt/screen/TestMachineApp/Shipment.xml" menu-index="21"/>
+        <subscreens-item name="Shipping" location="component://TestMachineMgnt/screen/TestMachineApp/Shipping.xml" menu-index="22"/>
+
+        <subscreens-item name="Project" location="component://TestMachineMgnt/screen/TestMachineApp/Project.xml" menu-index="30"/>
+
+        <subscreens-item name="Entity" location="component://TestMachineMgnt/screen/TestMachineApp/Entity.xml" menu-index="91"/>
+        <subscreens-item name="Service" location="component://TestMachineMgnt/screen/TestMachineApp/Service.xml" menu-index="92"/>
+
+<!--        <subscreens-item name="TestMachineOrder" location="component://TestMachineMgnt/screen/TestMachineApp/TestMachineOrder.xml" menu-include="false"/>-->
+<!--        <subscreens-item name="TestMachineReturn" location="component://TestMachineMgnt/screen/TestMachineApp/TestMachineReturn.xml" menu-include="false"/>-->
     </subscreens>
 
     <widgets>

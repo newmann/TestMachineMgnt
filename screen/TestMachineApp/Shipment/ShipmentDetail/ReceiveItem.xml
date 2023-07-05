@@ -85,6 +85,7 @@ along with this software (see the LICENSE.md file). If not, see
 
         <!-- try to get the default acquireCost from order items -->
         <set field="orderShipmentItemSourceList" from="shipmentItemSourceList.findAll({ it.orderId &amp;&amp; it.orderItemSeqId })"/>
+        <set field="testMachineTakeBackFromAssetList" from="[]"/>
         <iterate list="orderShipmentItemSourceList" entry="shipmentItemSource">
             <if condition="(!acquireCost || !ownerPartyId) &amp;&amp; shipmentItemSource.orderId &amp;&amp; shipmentItemSource.orderItemSeqId">
                 <entity-find-one entity-name="mantle.order.OrderItem" value-field="orderItem">
@@ -95,6 +96,22 @@ along with this software (see the LICENSE.md file). If not, see
                 <if condition="!ownerPartyId">
                     <set field="orderPart" from="orderItem?.'mantle.order.OrderPart'"/>
                     <set field="ownerPartyId" from="orderPart?.customerPartyId"/>
+                </if>
+                <!--        针对样机回收，要进行特别处理
+    1、需要显示退回的assetID
+    2、需要显示退回的借出订单编号
+-->
+                <if condition="orderItem.fromAssetId">
+                    <entity-find-one entity-name="mantle.order.OrderHeader" value-field="orderHeader">
+                        <field-map field-name="orderId" from="shipmentItemSource.orderId"/>
+                    </entity-find-one>
+                    <if condition="orderHeader.orderTypeEnumId == 'OtTestMachineTakeBack'">
+                        <entity-find-one entity-name="mantle.product.asset.Asset" value-field="asset">
+                            <field-map field-name="assetId" from="orderItem.fromAssetId"/>
+                        </entity-find-one>
+
+                        <script>testMachineTakeBackFromAssetList.add(orderItem.getMap()+asset.getMap())</script>
+                    </if>
                 </if>
             </if>
         </iterate>
@@ -121,7 +138,9 @@ along with this software (see the LICENSE.md file). If not, see
             <set field="asset" from="assetIssuance.asset"/>
             <if condition="!lotId &amp;&amp; asset?.lotId"><set field="lotId" from="asset.lotId"/></if>
             <if condition="!acquireCost &amp;&amp; asset?.acquireCost"><set field="acquireCost" from="asset.acquireCost"/></if>
+<!--            TODO 没有任何处理动作？-->
         </iterate>
+
     </actions>
     <widgets>
         <form-single name="ReceiveForm" transition="receive">
@@ -178,6 +197,13 @@ along with this software (see the LICENSE.md file). If not, see
 
             <field name="quantityAccepted"><default-field><text-line size="8"/></default-field></field>
             <field name="quantityRejected"><default-field><text-line size="8"/></default-field></field>
+            <field name="fromAssetList">
+                <conditional-field condition="testMachineTakeBackFromAssetList.size &gt; 0" title="From Asset">
+                    <drop-down >
+                        <list-options list="testMachineTakeBackFromAssetList" text="${fromAssetId}:${serialNumber}" key="fromaAssetId"/>
+                    </drop-down>
+                </conditional-field>
+            </field>
             <field name="serialNumber"><default-field tooltip="If specified Quantity Accepted will be set to 1 (one) unless Quantity Rejected is 1">
                 <text-line size="25"/></default-field></field>
 
@@ -214,6 +240,7 @@ along with this software (see the LICENSE.md file). If not, see
                 <field-ref name="assetPoolId"/>
                 <field-ref name="acquireCost"/>
                 <field-row><field-ref name="quantityAccepted"/><field-ref name="quantityRejected"/></field-row>
+                <field-ref name="fromAssetList"/>
                 <field-row><field-ref name="serialNumber"/><field-ref name="rejectionReasonEnumId"/></field-row>
                 <field-row><field-ref name="facilityId"/><field-ref name="containerId"/></field-row>
                 <field-ref name="locationSeqId"/>

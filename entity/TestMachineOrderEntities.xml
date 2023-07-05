@@ -491,28 +491,28 @@ along with this software (see the LICENSE.md file). If not, see
         <relationship type="one" related="moqui.security.UserAccount"/>
     </entity>
 
-    <!-- ========================================================= -->
-    <!--  - beiyelin.testmachine.AssetBorrow -->
-    <!-- ========================================================= -->
-    <entity entity-name="AssetBorrow" package="beiyelin.testmachine" cache="never">
-        <field name="assetBorrowId" type="id" is-pk="true"/>
-        <field name="assetId" type="id"/>
-        <field name="borrowPartyId" type="id"/>
-        <field name="productId" type="id"/>
-        <field name="testMachineOrderId" type="id"/>
-        <field name="testMachineOrderItemSeqId" type="id"/>
-        <field name="quantity" type="number-decimal"/>
-        <field name="quantityReturned" type="number-decimal">
-            <description>The quantity returned.</description>
-        </field>
-        <field name="borrowDate" type="date-time"/>
-        <field name="planReturnDate" type="date-time"><description>计划退回时间</description> </field>
+<!--    &lt;!&ndash; ========================================================= &ndash;&gt;-->
+<!--    &lt;!&ndash;  - beiyelin.testmachine.AssetBorrow &ndash;&gt;-->
+<!--    &lt;!&ndash; ========================================================= &ndash;&gt;-->
+<!--    <entity entity-name="AssetBorrow" package="beiyelin.testmachine" cache="never">-->
+<!--        <field name="assetBorrowId" type="id" is-pk="true"/>-->
+<!--        <field name="assetId" type="id"/>-->
+<!--        <field name="borrowPartyId" type="id"/>-->
+<!--        <field name="productId" type="id"/>-->
+<!--        <field name="testMachineOrderId" type="id"/>-->
+<!--        <field name="testMachineOrderItemSeqId" type="id"/>-->
+<!--        <field name="quantity" type="number-decimal"/>-->
+<!--        <field name="quantityReturned" type="number-decimal">-->
+<!--            <description>The quantity returned.</description>-->
+<!--        </field>-->
+<!--        <field name="borrowDate" type="date-time"/>-->
+<!--        <field name="planReturnDate" type="date-time"><description>计划退回时间</description> </field>-->
 
-        <relationship type="one" related="mantle.product.asset.Asset" short-alias="asset"/>
-        <relationship type="one" related="mantle.product.Product" short-alias="product"/>
-        <relationship type="one-nofk" related="beiyelin.testmachine.TestMachineOrderHeader" short-alias="orderHeader"/>
-        <relationship type="one" related="beiyelin.testmachine.TestMachineOrderItem" short-alias="orderItem"/>
-    </entity>
+<!--        <relationship type="one" related="mantle.product.asset.Asset" short-alias="asset"/>-->
+<!--        <relationship type="one" related="mantle.product.Product" short-alias="product"/>-->
+<!--        <relationship type="one-nofk" related="beiyelin.testmachine.TestMachineOrderHeader" short-alias="orderHeader"/>-->
+<!--        <relationship type="one" related="beiyelin.testmachine.TestMachineOrderItem" short-alias="orderItem"/>-->
+<!--    </entity>-->
     <!-- ========================================================= -->
     <!--  - beiyelin.testmachine.TestMachineSale -->
     <!-- ========================================================= -->

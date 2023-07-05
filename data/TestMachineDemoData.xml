@@ -61,6 +61,37 @@ along with this software (see the LICENSE.md file). If not, see
             <parties contactMechPurposeId="PostalPrimary" fromDate="1265184000000"/>
         </mantle.party.contact.ContactMech>
     </parties>
+<!-- 供应商-->
+    <parties partyId="100105"  pseudoId="Ejeton" partyTypeEnumId="PtyOrganization">
+        <Organization organizationName="易捷通"/>
+        <roles roleTypeId="Supplier"/>
+        <mantle.party.contact.ContactMech contactMechId="CustEjetonTeln" contactMechTypeEnumId="CmtTelecomNumber">
+            <telecomNumber countryCode="86" areaCode="0755" contactNumber="29657495"/>
+            <parties contactMechPurposeId="PhonePrimary" fromDate="1265184000000" allowSolicitation="Y"/>
+        </mantle.party.contact.ContactMech>
+
+        <mantle.party.contact.ContactMech contactMechId="CustBeiGuoAddr" contactMechTypeEnumId="CmtPostalAddress">
+            <postalAddress toName="服务台" attnName="" address1="深圳市宝安区西乡街道南昌社区南昌第二工业区新零售数字化产业园B栋6层" address2="" unitNumber="188"
+                           city="shengzhun" stateProvinceGeoId="CHN_44" countryGeoId="CHN"
+                           telecomContactMechId="CustEjetonTeln"/>
+            <parties contactMechPurposeId="PostalPrimary" fromDate="1265184000000"/>
+        </mantle.party.contact.ContactMech>
+    </parties>
+    <parties partyId="100106"  pseudoId="ZoneRich" partyTypeEnumId="PtyOrganization">
+        <Organization organizationName="广州市中崎商业机器股份有限公司"/>
+        <roles roleTypeId="Supplier"/>
+        <mantle.party.contact.ContactMech contactMechId="CustZoneRichTeln" contactMechTypeEnumId="CmtTelecomNumber">
+            <telecomNumber countryCode="86" areaCode="020" contactNumber="66671666"/>
+            <parties contactMechPurposeId="PhonePrimary" fromDate="1265184000000" allowSolicitation="Y"/>
+        </mantle.party.contact.ContactMech>
+
+        <mantle.party.contact.ContactMech contactMechId="CustZoneRichAddr" contactMechTypeEnumId="CmtPostalAddress">
+            <postalAddress toName="中崎股份" attnName="" address1="广州市黄埔区云骏路17号中崎科技园" address2="" unitNumber="17"
+                           city="广州" stateProvinceGeoId="CHN_44" countryGeoId="CHN"
+                           telecomContactMechId="CustZoneRichTeln"/>
+            <parties contactMechPurposeId="PostalPrimary" fromDate="1265184000000"/>
+        </mantle.party.contact.ContactMech>
+    </parties>
 
     <!-- 仓库&展厅 -->
     <facilities facilityId="100002" pseudoId="9050" facilityTypeEnumId="FcTpWarehouse" facilityName="9050仓库">

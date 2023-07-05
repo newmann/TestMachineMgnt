@@ -15,11 +15,15 @@ along with this software (see the LICENSE.md file). If not, see
 <screen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-3.xsd"
         default-menu-title="Find Order" default-menu-include="false">
 
-    <transition name="orderDetail"><default-response url="../OrderDetail"/></transition>
-    <transition name="createOrder"><service-call name="mantle.order.OrderServices.create#Order"/>
-        <default-response url="../OrderDetail"/></transition>
-    <transition name="changeOrderPartsStatus"><service-call name="mantle.order.OrderBulkServices.change#OrderPartsStatus"/>
-        <default-response url="."/></transition>
+<!--    <transition name="orderDetail"><default-response url="../OrderDetail"/></transition>-->
+    <transition-include name="orderDetail" location="component://TestMachineMgnt/screen/TestMachineApp/Order/FindOrder.xml"/>
+<!--    <transition name="createOrder"><service-call name="mantle.order.OrderServices.create#Order"/>-->
+<!--        <default-response url="../OrderDetail"/></transition>-->
+    <transition-include name="createOrder" location="component://TestMachineMgnt/screen/TestMachineApp/Order/FindOrder.xml"/>
+
+<!--    <transition name="changeOrderPartsStatus"><service-call name="mantle.order.OrderBulkServices.change#OrderPartsStatus"/>
+        <default-response url="."/></transition>-->
+    <transition-include name="changeOrderPartsStatus" location="component://TestMachineMgnt/screen/TestMachineApp/Order/FindOrder.xml"/>
 
     <transition name="editFacility"><default-response url="//${appRoot}/Facility/EditFacility"/></transition>
     <transition name="editParty"><default-response url="//${appRoot}/Party/EditParty"/></transition>
@@ -32,13 +36,15 @@ along with this software (see the LICENSE.md file). If not, see
     <transition-include name="getFacilityList" location="component://SimpleScreens/template/facility/FacilityTransitions.xml"/>
     <transition-include name="getGeoCountryStates" location="component://SimpleScreens/template/party/PartyForms.xml"/>
 
-    <transition name="getWhFacilitiesByOwner">
+<!--    <transition name="getWhFacilitiesByOwner">
         <service-call name="mantle.facility.FacilityServices.get#FacilitiesByOwner"
                 in-map="[ownerPartyId:(customerPartyId ?: vendorPartyId), productStoreId:productStoreId, facilityTypeEnumId:'FcTpWarehouse']"
                 web-send-json-response="resultList"/>
         <default-response type="none"/>
-    </transition>
-    <transition name="getStoreOrgOrAllOrgInternal"><parameter name="productStoreId"/><actions>
+    </transition>-->
+    <transition-include name="getWhFacilitiesByOwner" location="component://TestMachineMgnt/screen/TestMachineApp/Order/FindOrder.xml"/>
+
+<!--    <transition name="getStoreOrgOrAllOrgInternal"><parameter name="productStoreId"/><actions>
         <if condition="productStoreId">
             <entity-find-one entity-name="mantle.product.store.ProductStore" value-field="productStore">
                 <field-map field-name="productStoreId"/></entity-find-one>
@@ -61,7 +67,8 @@ along with this software (see the LICENSE.md file). If not, see
             for (party in partyList) outList.add([value:party.partyId, label:ec.resource.expand("PartyNameTemplate", "", party)])
             ec.web.sendJsonResponse(outList)
         </script>
-    </actions><default-response type="none"/></transition>
+    </actions><default-response type="none"/></transition>-->
+    <transition-include name="getStoreOrgOrAllOrgInternal" location="component://TestMachineMgnt/screen/TestMachineApp/Order/FindOrder.xml"/>
 
     <actions>
 <!--        <set field="itemTypeEnumId" from="'ItemTestMachine'"/>-->
@@ -73,7 +80,7 @@ along with this software (see the LICENSE.md file). If not, see
 <!--            &lt;!&ndash; NOTE might be better: if itemTypeEnumId specified create a Set containing only types in both &ndash;&gt;-->
 <!--        </if>-->
 
-<!--        <set field="orderTypeEnumId" from="orderType ?: 'Any'"/>-->
+
         <set field="vendorRole" value="Supplier,Vendor,VendorBillFrom"/>
         <set field="customerRole" value="Customer,CustomerBillTo"/>
 
@@ -94,13 +101,19 @@ along with this software (see the LICENSE.md file). If not, see
     </actions>
     <widgets>
         <container-row><row-col md="5">
-            <container-dialog id="CreateTestMachineRequestOrderDialog" button-text="Create Test Machine Request Order">
-                <form-single name="CreateTestMachineRequestOrder" transition="createOrder">
-                    <field name="orderTypeEnumId" from="'OtTestMachineRequest'">
+
+
+            <container-dialog id="CreateTestMachineTakeBackOrderDialog" button-text="Create Test Machine Take Back Order">
+                <form-single name="CreateTestMachineTakeBackOrder" transition="createOrder">
+                    <field name="orderTypeEnumId" from="'OtTestMachineTakeBack'">
                         <default-field title="Order Type" >
                             <display-entity entity-name="moqui.basic.Enumeration" key-field-name="enumId"/>
                         </default-field>
                     </field>
+                    <field name="vendorPartyId"><default-field title="Customer"><drop-down allow-empty="true">
+                        <dynamic-options transition="searchPartyList" server-search="true" min-length="2" parameter-map="[roleTypeId:'Customer']"/>
+                    </drop-down></default-field></field>
+
 <!--                    <field name="productStoreId" from="productStoreId ?: defaultProductStoreId"><default-field title="Store">-->
 <!--                        <drop-down allow-empty="true">-->
 <!--                            <entity-options key="${productStoreId}" text="${productStoreId}: ${storeName}">-->
@@ -108,20 +121,17 @@ along with this software (see the LICENSE.md file). If not, see
 <!--                                    <order-by field-name="storeName"/></entity-find></entity-options>-->
 <!--                        </drop-down>-->
 <!--                    </default-field></field>-->
-                    <field name="vendorPartyId"><default-field title="Internal Org">
+                    <field name="customerPartyId"><default-field title="Take Back Internal Org">
                         <drop-down><dynamic-options transition="getStoreOrgOrAllOrgInternal" depends-optional="true">
                             <depends-on field="productStoreId"/></dynamic-options></drop-down>
                     </default-field></field>
-                    <field name="facilityId" from="facilityId ?: (!defaultProductStoreId ? defaultFacilityId : null)"><default-field title="Outgoing Facility">
+                    <field name="facilityId" from="facilityId ?: (!defaultProductStoreId ? defaultFacilityId : null)"><default-field title="Incoming Facility">
                         <drop-down><dynamic-options transition="getWhFacilitiesByOwner" value-field="facilityId" label-field="label" depends-optional="true">
-                            <depends-on field="vendorPartyId"/>
-<!--                            <depends-on field="productStoreId"/>-->
-                        </dynamic-options></drop-down>
+                            <depends-on field="customerPartyId"/>
+                            </dynamic-options>
+                        </drop-down>
                     </default-field></field>
-                    <field name="customerPartyId"><default-field title="Customer"><drop-down allow-empty="true">
-                        <dynamic-options transition="searchPartyList" server-search="true" min-length="2" parameter-map="[roleTypeId:'Customer']"/>
-                    </drop-down></default-field></field>
-<!--                    <field name="otherPartyOrderId"><default-field title="Their Order ID"><text-line size="40"/></default-field></field>-->
+
 <!--                    <field name="priority"><default-field><radio no-current-selected-key="5">-->
 <!--                        <option key="1"/><option key="2"/><option key="3"/><option key="4"/><option key="5"/>-->
 <!--                        <option key="6"/><option key="7"/><option key="8"/><option key="9"/>-->
@@ -131,7 +141,6 @@ along with this software (see the LICENSE.md file). If not, see
                     <field name="submitButton"><default-field title="Create"><submit/></default-field></field>
                 </form-single>
             </container-dialog>
-
 
         </row-col><row-col md="7" style="text-right">
 
@@ -163,69 +172,8 @@ along with this software (see the LICENSE.md file). If not, see
 <!--                    </form-single>-->
 <!--                </container-dialog>-->
 <!--            </widgets></section>-->
-            <container-dialog id="CreateTestMachineSalesOrderDialog" button-text="Create Test Machine Sales Order">
-                <form-single name="CreateTestMachineTakeBackOrder" transition="createOrder">
-                    <field name="orderTypeEnumId" from="'OtTestMachineSales'">
-                        <default-field title="Order Type" >
-                            <display-entity entity-name="moqui.basic.Enumeration" key-field-name="enumId"/>
-                        </default-field>
-                    </field>
-                    <field name="vendorPartyId"><default-field title="Internal Org">
 
-                        <drop-down><dynamic-options transition="getStoreOrgOrAllOrgInternal" depends-optional="true">
-                            <depends-on field="productStoreId"/></dynamic-options></drop-down>
 
-                    </default-field></field>
-                    <field name="customerPartyId"><default-field title="Customer">
-                        <drop-down allow-empty="true">
-                            <dynamic-options transition="searchPartyList" server-search="true" min-length="2" parameter-map="[roleTypeId:'Customer']"/>
-                        </drop-down>
-                    </default-field></field>
-<!--
-                    <field name="facilityId" from="facilityId ?: (!defaultProductStoreId ? defaultFacilityId : null)"><default-field title="Incoming Facility">
-                        <drop-down><dynamic-options transition="getWhFacilitiesByOwner" value-field="facilityId" label-field="label" depends-optional="true">
-                            <depends-on field="customerPartyId"/>
-                        </dynamic-options>
-                        </drop-down>
-                    </default-field></field>
--->
-
-<!--
-                    <field name="shipBeforeDate"><default-field><date-time/></default-field></field>
-                    <field name="estimatedDeliveryDate"><default-field title="Delivery Date"><date-time/></default-field></field>
--->
-                    <field name="submitButton"><default-field title="Create"><submit/></default-field></field>
-                </form-single>
-            </container-dialog>
-
-            <container-dialog id="CreateTestMachinePurchaseOrderDialog" button-text="Create Test Machine Purchase Order">
-                <form-single name="CreateTestMachinePurchaseOrder" transition="createOrder">
-                    <field name="orderTypeEnumId" from="'OtTestMachinePurchase'">
-                        <default-field>
-                            <hidden />
-                        </default-field>
-                    </field>
-                    <field name="vendorPartyId"><default-field title="Supplier"><drop-down allow-empty="true">
-                        <dynamic-options transition="searchPartyList" server-search="true" min-length="0" parameter-map="[roleTypeId:vendorRole]"/>
-                    </drop-down></default-field></field>
-                    <field name="customerPartyId"><default-field title="Customer Org"><drop-down>
-                        <entity-options key="${partyId}" text="PartyNameTemplate">
-                            <entity-find entity-name="mantle.party.PartyDetailAndRole">
-                                <econdition field-name="roleTypeId" value="OrgInternal"/>
-                                <econdition field-name="disabled" value="N" or-null="true"/>
-                                <order-by field-name="organizationName"/>
-                            </entity-find>
-                        </entity-options>
-                    </drop-down></default-field></field>
-                    <field name="facilityId" from="facilityId ?: defaultFacilityId"><default-field title="Facility">
-                        <drop-down><dynamic-options transition="getFacilityList" server-search="true" min-length="0"
-                                parameter-map="[facilityTypeEnumId:'FcTpWarehouse']"/></drop-down>
-                    </default-field></field>
-                    <field name="shipBeforeDate"><default-field><date-time/></default-field></field>
-                    <field name="estimatedDeliveryDate"><default-field title="Delivery Date"><date-time/></default-field></field>
-                    <field name="submitButton"><default-field title="Create"><submit/></default-field></field>
-                </form-single>
-            </container-dialog>
         </row-col></container-row>
 
         <form-list name="OrderList" list="orderList" skip-form="true" header-dialog="true" select-columns="true" saved-finds="true"
@@ -234,7 +182,7 @@ along with this software (see the LICENSE.md file). If not, see
                 <search-form-inputs default-order-by="-entryDate,orderId,orderPartSeqId"
                         skip-fields="vendorRoleTypeId,customerRoleTypeId,customerClassificationId">
 
-                    <default-parameters partStatusId="OrderOpen,OrderPlaced,OrderApproved,OrderHold,OrderProcessing" partStatusId_op="in"
+                    <default-parameters orderTypeEnumId="OtTestMachineTakeBack" partStatusId="OrderOpen,OrderPlaced,OrderApproved,OrderHold,OrderProcessing" partStatusId_op="in"
                             entryDate_poffset="-3" entryDate_period="30d"/></search-form-inputs>
                 <date-filter from-field-name="customerClassFromDate" thru-field-name="customerClassThruDate" ignore="!customerClassificationId"/>
 <!--                <econdition field-name="vendorRoleTypeId" value="OrgInternal" ignore="!'sales'.equalsIgnoreCase(orderType)"/>-->
@@ -281,13 +229,20 @@ along with this software (see the LICENSE.md file). If not, see
                 </if>
             </row-actions>
 
-            <field name="orderTypeEnumId"><header-field title="Order Type">
-                <drop-down allow-empty="true" allow-multiple="true">
-                    <entity-options key="${enumId}" text="${description}">
-                        <entity-find entity-name="moqui.basic.EnumAndGroup" list="itemTypeEnumList">
-                            <econdition field-name="enumGroupEnumId" from="'EngTestMachineOrderType'"/>
-                            <order-by field-name="description"/></entity-find></entity-options>
-                </drop-down> </header-field>
+            <field name="orderTypeEnumId">
+                <header-field title="Order Type"  >
+<!--                    <display />-->
+<!--                    <text-line   default-value="OtTestMachineTakeBack"  disabled="true"/>-->
+
+<!--                    <display-entity entity-name="moqui.basic.Enumeration" />-->
+                    <drop-down allow-empty="false" allow-multiple="false" no-current-selected-key="'OtTestMachineTakeBack" >
+                        <entity-options key="${enumId}" text="${description}">
+                            <entity-find entity-name="moqui.basic.EnumAndGroup" list="itemTypeEnumList" >
+                                <econdition field-name="enumGroupEnumId" from="'EngTestMachineOrderType'"/>
+                                <econdition field-name="enumId" from="'OtTestMachineTakeBack'"/>
+                                <order-by field-name="description"/></entity-find></entity-options>
+                    </drop-down>
+                </header-field>
                 <default-field container-style="text-strong"><display-entity entity-name="moqui.basic.Enumeration"/></default-field>
             </field>
 

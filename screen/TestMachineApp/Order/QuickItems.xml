@@ -31,6 +31,10 @@ along with this software (see the LICENSE.md file). If not, see
 
     <actions>
         <entity-find-one entity-name="mantle.order.OrderHeader" value-field="orderHeader"/>
+        <set field="editableStatusIds" from="new HashSet(['OrderBeingChanged', 'OrderOpen', 'OrderRequested',
+                'OrderProposed', 'OrderPlaced', 'OrderHold', 'OrderProcessing', 'OrderWishList', 'OrderGiftRegistry', 'OrderAutoReorder'])"/>
+        <set field="orderEditable" from="editableStatusIds.contains(orderHeader.statusId)"/>
+
 <!--        判断是否为样机的orderType，设置ItemType-->
         <set field="orderTypeEnumId" from="orderHeader.orderTypeEnumId"/>
 
@@ -102,10 +106,8 @@ along with this software (see the LICENSE.md file). If not, see
             </iterate>
 <!--将在用的样机包含进来-->
             <if condition="includeByUsed == 'Y'">
-                <entity-find entity-name="mantle.product.asset.AssetPartyAssignment" list="usedAssets">
-                    <date-filter/>
-                    <econdition field-name="partyId" from="orderPart?.vendorPartyId"/>
-                    <econdition field-name="roleTypeId" value="TestParty"/>
+                <entity-find entity-name="mantle.product.asset.AssetBorrow" list="usedAssets">
+                    <econdition field-name="borrowPartyId" from="orderPart?.vendorPartyId"/>
                 </entity-find>
                 <if condition="usedAssets">
                     <set field="usedAssetProductList" from="[]"/>
@@ -120,6 +122,8 @@ along with this software (see the LICENSE.md file). If not, see
 <!--                        <script>-->
 
 <!--                        </script>-->
+                        <set field="tempAssetId.fromAssetId" from="asset.assetId"/>
+                        <set field="tempAssetId.quantity" from="usedAsset.quantity - usedAsset.quantityReturned"/>
 
                         <script>
                             tempAssetId.fromAssetId = asset.assetId
@@ -168,32 +172,41 @@ along with this software (see the LICENSE.md file). If not, see
 
     <widgets>
         <!-- not needed, now in tab: <link url="../OrderDetail" text="Back to Order ${orderId}"/> -->
-        <form-single name="QuickItemOptions" transition=".">
-            <field name="orderId"><default-field><hidden/></default-field></field>
-            <field name="orderByField"><default-field><hidden/></default-field></field>
-            <field name="orderPartSeqId"><default-field title="Order Part"><drop-down>
-                <entity-options key="${orderPartSeqId}" text="${orderPartSeqId} ${ec.l10n.formatCurrency(partTotal, orderHeader.currencyUomId)}">
-                    <entity-find entity-name="mantle.order.OrderPart"><econdition field-name="orderId"/>
-                        <select-field field-name="orderPartSeqId,partTotal"/><order-by field-name="orderPartSeqId"/></entity-find>
-                </entity-options>
-            </drop-down></default-field></field>
-            <field name="productCategoryId"><default-field title="Category"><drop-down allow-empty="true">
-                <!-- NOTE: to support large numbers of categories this should be changed to dynamic-options with server-search -->
-                <entity-options key="${productCategoryId}" text="${categoryName}">
-                    <entity-find entity-name="mantle.product.category.ProductCategory">
-                        <econdition field-name="productCategoryTypeEnumId" operator="in" value="PctQuickAdd,PctSearch,PctCatalog"/>
-                        <order-by field-name="categoryName"/></entity-find></entity-options>
-            </drop-down></default-field></field>
-<!--           包含已经借出的样机-->
-            <field name="includeByUsed">
-                <conditional-field condition="orderHeader.orderTypeEnumId == 'OtTestMachineTakeBack'" title="Include current customer used">
-                    <radio no-current-selected-key="Y"><option key="Y" text="Yes"/><option key="N" text="No"/> </radio>
-                </conditional-field>
-            </field>
-            <field name="submitButton"><default-field title="Select"><submit/></default-field></field>
-            <field-layout><field-row-big><field-ref name="orderPartSeqId"/><field-ref name="productCategoryId"/><field-ref name="includeByUsed"/>
-                <field-ref name="submitButton"/></field-row-big></field-layout>
-        </form-single>
+        <section name="QuickItemOptions" condition="orderEditable">
+            <widgets>
+                <form-single name="QuickItemOptions" transition=".">
+                    <field name="orderId"><default-field><hidden/></default-field></field>
+                    <field name="orderByField"><default-field><hidden/></default-field></field>
+                    <field name="orderPartSeqId"><default-field title="Order Part"><drop-down>
+                        <entity-options key="${orderPartSeqId}" text="${orderPartSeqId} ${ec.l10n.formatCurrency(partTotal, orderHeader.currencyUomId)}">
+                            <entity-find entity-name="mantle.order.OrderPart"><econdition field-name="orderId"/>
+                                <select-field field-name="orderPartSeqId,partTotal"/><order-by field-name="orderPartSeqId"/></entity-find>
+                        </entity-options>
+                    </drop-down></default-field></field>
+                    <field name="productCategoryId"><default-field title="Category"><drop-down allow-empty="true">
+                        <!-- NOTE: to support large numbers of categories this should be changed to dynamic-options with server-search -->
+                        <entity-options key="${productCategoryId}" text="${categoryName}">
+                            <entity-find entity-name="mantle.product.category.ProductCategory">
+                                <econdition field-name="productCategoryTypeEnumId" operator="in" value="PctQuickAdd,PctSearch,PctCatalog"/>
+                                <order-by field-name="categoryName"/></entity-find></entity-options>
+                    </drop-down></default-field></field>
+                    <!--           包含已经借出的样机-->
+                    <field name="includeByUsed">
+                        <conditional-field condition="orderHeader.orderTypeEnumId == 'OtTestMachineTakeBack'" title="Include current customer used">
+                            <radio no-current-selected-key="Y"><option key="Y" text="Yes"/><option key="N" text="No"/> </radio>
+                        </conditional-field>
+                    </field>
+                    <field name="submitButton"><default-field title="Select"><submit/></default-field></field>
+                    <field-layout><field-row-big><field-ref name="orderPartSeqId"/><field-ref name="productCategoryId"/><field-ref name="includeByUsed"/>
+                        <field-ref name="submitButton"/></field-row-big></field-layout>
+                </form-single>
+
+            </widgets>
+            <fail-widgets>
+
+                <label type="h4" text="Current Order status is ${orderHeader.statusId}, which is not editable."/>
+            </fail-widgets>
+        </section>
 
         <section name="QuickItemSection" condition="productInfoList"><widgets>
             <form-list name="QuickItemList" list="productInfoList" multi="true" transition="setItemQuantities">
@@ -233,10 +246,10 @@ along with this software (see the LICENSE.md file). If not, see
                         <text-line size="8" format="#,##0.00"/></conditional-field>
                     <default-field title="Price"><display/></default-field>
                 </field>
-                <field name="quantity" align="right">
-                    <conditional-field condition="orderHeader.orderTypeEnumId == 'OtTestMachineTakeBack'" >
-                        <display />
-                    </conditional-field>
+                <field name="quantity" align="right" >
+<!--                    <conditional-field condition="orderHeader.orderTypeEnumId == 'OtTestMachineTakeBack'" >-->
+<!--                        <display />-->
+<!--                    </conditional-field>-->
                     <conditional-field condition="productId"><text-line size="4"/></conditional-field>
                     <default-field><display/></default-field></field>
                 <field name="itemQuantity" from="quantity" align="right">
@@ -245,7 +258,7 @@ along with this software (see the LICENSE.md file). If not, see
                     <default-field title="Cur Total"><display currency-unit-field="orderHeader.currencyUomId" also-hidden="false"/></default-field></field>
                 <field name="fromAssetId">
                     <conditional-field  condition="orderHeader.orderTypeEnumId == 'OtTestMachineTakeBack'" title="Original Asset">
-                        <display-entity entity-name="mantle.product.asset.Asset" text="${assetId} : ${serialNumber}"/>
+                        <display-entity entity-name="mantle.product.asset.Asset" text="AssetId:${assetId} : SerialNumber:${serialNumber}"/>
 <!--                        <display text="${fromAssetId? fromAssetId : (}:${serialNumber}" />-->
                     </conditional-field>
                     <default-field title="Original Asset">

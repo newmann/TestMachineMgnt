@@ -1,0 +1,280 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+This software is in the public domain under CC0 1.0 Universal plus a
+Grant of Patent License.
+
+To the extent possible under law, the author(s) have dedicated all
+copyright and related and neighboring rights to this software to the
+public domain worldwide. This software is distributed without any
+warranty.
+
+You should have received a copy of the CC0 Public Domain Dedication
+along with this software (see the LICENSE.md file). If not, see
+<http://creativecommons.org/publicdomain/zero/1.0/>.
+-->
+<screen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-3.xsd"
+        default-menu-title="Add From Issuance" default-menu-index="4" >
+
+    <parameter name="orderId" from="orderId ?: orderId_0" required="true"/>
+    <parameter name="orderPartSeqId" from="orderPartSeqId ?: orderPartSeqId_0"/>
+
+    <transition name="editProduct"><default-response url="//${appRoot}/Product/EditProduct"/></transition>
+
+    <transition name="editOrderDetail"><default-response url="//${appRoot}/Order/OrderDetail"/></transition>
+
+    <transition name="setItemQuantities">
+
+        <service-call name="beiyelin.order.OrderServices.add#OrderProductQuantityFromIssuance" multi="true"
+                in-map="context"/>
+        <actions><log message="Order ${orderId} setItemQuantities parameters: ${ec.web.requestParameters}"/></actions>
+        <default-response url="."/>
+    </transition>
+
+    <actions>
+        <entity-find-one entity-name="mantle.order.OrderHeader" value-field="orderHeader"/>
+        <set field="editableStatusIds" from="new HashSet(['OrderBeingChanged', 'OrderOpen', 'OrderRequested',
+                'OrderProposed', 'OrderPlaced', 'OrderHold', 'OrderProcessing', 'OrderWishList', 'OrderGiftRegistry', 'OrderAutoReorder'])"/>
+        <set field="orderEditable" from="editableStatusIds.contains(orderHeader.statusId)"/>
+
+<!--        判断是否为样机的orderType，设置ItemType-->
+        <set field="orderTypeEnumId" from="orderHeader.orderTypeEnumId"/>
+<!--根据orderType返回了ItemTypeEnumId-->
+        <service-call name="beiyelin.BasicServices.get#ItemTypeByOrderType" in-map="[orderTypeEnumId:orderTypeEnumId]" out-map="context"/>
+
+
+        <if condition="orderPartSeqId">
+            <entity-find-one entity-name="mantle.order.OrderPart" value-field="orderPart"/>
+            <set field="productStoreId" from="orderHeader.productStoreId"/>
+
+            <if condition="!productCategoryId &amp;&amp; productStoreId">
+                <!-- For the default category to select: look for Quick Add Internal, then Quick Add, then Search category -->
+                <entity-find entity-name="mantle.product.store.ProductStoreCategory" list="psCatList" cache="true">
+                    <date-filter/><econdition field-name="productStoreId"/>
+                    <econdition field-name="storeCategoryTypeEnumId" value="PsctQuickInternal"/>
+                </entity-find>
+                <if condition="!psCatList">
+                    <entity-find entity-name="mantle.product.store.ProductStoreCategory" list="psCatList" cache="true">
+                        <date-filter/><econdition field-name="productStoreId"/>
+                        <econdition field-name="storeCategoryTypeEnumId" value="PsctQuickAdd"/>
+                    </entity-find>
+                </if>
+                <if condition="!psCatList">
+                    <entity-find entity-name="mantle.product.store.ProductStoreCategory" list="psCatList" cache="true">
+                        <date-filter/><econdition field-name="productStoreId"/>
+                        <econdition field-name="storeCategoryTypeEnumId" value="PsctSearch"/>
+                    </entity-find>
+                </if>
+                <set field="productCategoryId" from="psCatList ? psCatList[0].productCategoryId : null"/>
+            </if>
+<!--TODO，这里没有考虑到分类的树形架构，只是简单地按分类查询-->
+
+            <set field="productInfoList" from="[]"/>
+            <!--            按产品分类获取所有借出清单，否则取所有借出清单-->
+            <if condition="productCategoryId">
+                <then>
+                    <entity-find entity-name="mantle.product.asset.AssetBorrowProductCategory" list="borrowList" cache="false">
+                        <date-filter/>
+                        <econdition field-name="productCategoryId"/>
+                        <econdition field-name="borrowPartyId" from="orderPart?.vendorPartyId"/>
+                    </entity-find>
+                </then>
+                <else>
+                    <entity-find entity-name="mantle.product.asset.AssetBorrow" list="borrowList" cache="false">
+                        <econdition field-name="borrowPartyId" from="orderPart?.vendorPartyId"/>
+                    </entity-find>
+
+                </else>
+            </if>
+
+            <entity-find entity-name="mantle.order.OrderItem" list="orderItemList">
+                <econdition field-name="orderId"/>
+                <econdition field-name="orderPartSeqId"/>
+                <select-field field-name="orderItemSeqId"/>
+            </entity-find>
+    <!--取订单明细中所有来源发货信息-->
+            <entity-find entity-name="mantle.order.OrderItemFromIssuance" list="orderItemFromIssuanceList" cache="false">
+                <econdition field-name="orderId"/>
+                <econdition field-name="orderItemSeqId" operator="in" from="orderItemList*.orderItemSeqId" ignore-if-empty="true"/>
+            </entity-find>
+<!--            处理产品定义中已经在订单中存在的产品，获取相关数量、价格等信息-->
+            <iterate list="borrowList" entry="borrow">
+<!--                TODO raise error-->
+                <set field="filteredOrderItemFromIssuanceList" from="orderItemFromIssuanceList.findAll({ it.productId == borrow.productId
+                        &amp;&amp; it.assetId == borrow.assetId &amp;&amp; it.assetIssuanceId == borrow.assetIssuanceId })"/>
+<!--                <if condition="orderItemFromIssuanceList">-->
+<!--                    <set field="borrow.orderItemFromIssuance" from="filteredOrderItemFromIssuanceList.first"/>-->
+<!--                </if>-->
+<!--                <set field="borrow.orderItemFromIssuance" from="orderItemFromIssuanceList?.first"/>-->
+                <script>
+//                    orderItemFromIssuance = orderItemFromIssuanceList.findAll {EntityValue it -> (it.productId == borrow.productId
+//                            &amp;&amp; it.assetId == borrow.assetId &amp;&amp; it.assetIssuanceId == borrow.assetIssuanceId) }
+                    productInfoList.add(borrow.getMap()+[orderItemFromIssuance:orderItemFromIssuanceList?.first])
+                </script>
+            </iterate>
+<!--            <message>productInfoList: ${productInfoList}</message>-->
+
+
+        </if>
+    </actions>
+
+    <widgets>
+        <!-- not needed, now in tab: <link url="../OrderDetail" text="Back to Order ${orderId}"/> -->
+        <section name="QuickItemOptions" condition="orderEditable">
+            <widgets>
+                <form-single name="QuickItemOptions" transition=".">
+                    <field name="orderId"><default-field><hidden/></default-field></field>
+                    <field name="orderByField"><default-field><hidden/></default-field></field>
+                    <field name="orderPartSeqId"><default-field title="Order Part"><drop-down>
+                        <entity-options key="${orderPartSeqId}" text="${orderPartSeqId} ${ec.l10n.formatCurrency(partTotal, orderHeader.currencyUomId)}">
+                            <entity-find entity-name="mantle.order.OrderPart"><econdition field-name="orderId"/>
+                                <select-field field-name="orderPartSeqId,partTotal"/><order-by field-name="orderPartSeqId"/></entity-find>
+                        </entity-options>
+                    </drop-down></default-field></field>
+                    <field name="productCategoryId"><default-field title="Category"><drop-down allow-empty="true">
+                        <!-- NOTE: to support large numbers of categories this should be changed to dynamic-options with server-search -->
+                        <entity-options key="${productCategoryId}" text="${categoryName}">
+                            <entity-find entity-name="mantle.product.category.ProductCategory">
+                                <econdition field-name="productCategoryTypeEnumId" operator="in" value="PctQuickAdd,PctSearch,PctCatalog"/>
+                                <order-by field-name="categoryName"/></entity-find></entity-options>
+                    </drop-down></default-field></field>
+                    <field name="submitButton"><default-field title="Select"><submit/></default-field></field>
+                    <field-layout><field-row-big><field-ref name="orderPartSeqId"/><field-ref name="productCategoryId"/>
+                        <field-ref name="submitButton"/></field-row-big></field-layout>
+                </form-single>
+
+            </widgets>
+            <fail-widgets>
+
+                <label type="h4" text="Current Order status is ${orderHeader.statusId}, which is not editable."/>
+            </fail-widgets>
+        </section>
+
+        <section name="QuickItemSection" condition="borrowList"><widgets>
+            <form-list name="QuickItemList" list="productInfoList" multi="true" transition="setItemQuantities" list-entry="productInfo">
+                <row-actions>
+
+                    <service-call name="mantle.product.PriceServices.get#ProductPrice" out-map="priceOut"
+                            in-map="[productId:productInfo.productId, priceUomId:orderHeader.currencyUomId,
+                                productStoreId:productStoreId, customerPartyId:orderPart.customerPartyId]"/>
+
+<!--                    <entity-find-one entity-name="mantle.order.OrderItemFromIssuance" value-field="orderItemFromIssuance">-->
+<!--                        <field-map field-name="orderId" from="orderId"/>-->
+<!--                        <field-map field-name="productId" from="productInfo.productId"/>-->
+<!--                        <field-map field-name="assetId" from="productInfo.assetId"/>-->
+<!--                        <field-map field-name="assetIssuanceId" from="productInfo.assetIssuanceId"/>-->
+<!--                    </entity-find-one>-->
+
+                    <entity-find-one entity-name="mantle.product.Product" value-field="product">
+                        <field-map field-name="productId" from="productInfo.productId"/>
+                    </entity-find-one>
+                </row-actions>
+
+                <hidden-parameters>
+                    <parameter name="orderId"/>
+                    <parameter name="orderPartSeqId"/>
+                    <parameter name="productCategoryId"/>
+                    <parameter name="orderTypeEnumId"/>
+                </hidden-parameters>
+                <field name="selected" from="productInfo.orderItemFromIssuance? true:false">
+                    <default-field title="Select">
+                        <radio><option key="true" text="Y"/><option key="false" text="N"/> </radio>
+                    </default-field>
+                </field>
+                <field name="assetIssuanceId" from="productInfo.assetIssuanceId">
+                    <default-field>
+                        <display/>
+                    </default-field>
+                </field>
+                <field name="assetId" from="productInfo.assetId">
+                    <default-field>
+                        <display/>
+                    </default-field>
+                </field>
+                <field name="assetBorrowId" from="productInfo.assetBorrowId"><default-field>
+                    <hidden/>
+                </default-field></field>
+                <field name="productId" from="productInfo.productId"><default-field><hidden/></default-field></field>
+
+                <field name="pseudoId" from="product.pseudoId"><header-field show-order-by="true"/>
+                    <default-field><link url="editProduct" text="${pseudoId}" link-type="anchor"/></default-field></field>
+                <field name="productName" from="product.productName"><header-field show-order-by="true"/>
+                    <default-field><link url="editProduct" text="${productName}" link-type="anchor"/></default-field></field>
+
+
+                <field name="itemTypeEnumId" from="itemTypeEnumId">
+                    <default-field title="Item Type">
+                        <display-entity entity-name="moqui.basic.Enumeration" key-field-name="enumId" />
+                    </default-field>
+                </field>
+                <field name="listPrice" from="priceOut.listPrice" align="right"><default-field>
+                    <display currency-unit-field="orderHeader.currencyUomId" also-hidden="false"/></default-field></field>
+                <field name="calcPrice" from="priceOut.price" align="right"><default-field>
+                    <display currency-unit-field="orderHeader.currencyUomId" also-hidden="false"/></default-field></field>
+
+                <field name="unitAmount" align="right">
+                    <conditional-field title="Price" condition="productId">
+                        <text-line size="8" format="#,##0.00"/></conditional-field>
+                    <default-field title="Price"><display/></default-field>
+                </field>
+                <field name="quantityConfirmed" >
+                    <default-field title="Quantity" >
+
+                        <text-line size="4" default-value="${productInfo.orderItemFromIssuance? productInfo.orderItemFromIssuance.quantity :
+                                productInfo.quantity - productInfo.quantityReturned }"/></default-field>
+                </field>
+
+<!--                <field name="quantityIssuanced" align="right" from="productInfo.quantity" >-->
+
+<!--                    <default-field title="Issuanced Quantity"><display/></default-field></field>-->
+                <field name="quantityAllowReturn" align="right" from="productInfo.quantity - productInfo.quantityReturned +
+                            (productInfo.orderItemFromIssuance? productInfo.orderItemFromIssuance.quantity: 0.0)">
+                    <default-field title="Allow Return Quantity"><display/></default-field>
+                </field>
+                <field name="borrowOrder">
+                    <default-field title="Original Order">
+                        <link url="//${appRoot}/Order/OrderDetail" parameter-map="[orderId:orderId]" text="${orderId}:${orderItemSeqId}" link-type="anchor"/>
+                    </default-field>
+                </field>
+
+                <field name="curOrderItemSeqId" from="orderItemFromIssuance?.orderItemSeqId" align="right"><header-field title="Cur Item" show-order-by="true"/>
+                    <default-field ><display/></default-field></field>
+                <field name="orderQuantity" from="orderItemFromIssuance?.quantity" align="right">
+                    <default-field title="Cur Qty"><display also-hidden="false"/></default-field></field>
+                <field name="orderTotal" from="(orderQuantity?:0.0)*(unitAmount?:0.0)" align="right">
+                    <default-field title="Cur Total"><display currency-unit-field="orderHeader.currencyUomId" also-hidden="false"/></default-field></field>
+
+
+                <field name="submitButton"><default-field title="Set Quantities"><submit/></default-field></field>
+
+                <form-list-column>
+                    <field-ref name="selected"/>
+                </form-list-column>
+                <form-list-column>
+                    <field-ref name="assetIssuanceId"/><field-ref name="assetId"/>
+                </form-list-column>
+                <form-list-column>
+                    <field-ref name="pseudoId"/><field-ref name="productName"/><field-ref name="itemTypeEnumId"/>
+                </form-list-column>
+                <form-list-column>
+                    <field-ref name="listPrice"/><field-ref name="calcPrice"/>
+                </form-list-column>
+                <form-list-column>
+                    <field-ref name="unitAmount"/>
+                </form-list-column>
+                <form-list-column>
+                    <field-ref name="quantityConfirmed"/>
+                </form-list-column>
+                <form-list-column>
+                    <field-ref name="quantityAllowReturn"/>
+                </form-list-column>
+                <form-list-column>
+                    <field-ref name="borrowOrder"/>
+                </form-list-column>
+                <form-list-column>
+                    <field-ref name="curOrderItemSeqId"/><field-ref name="orderQuantity"/><field-ref name="orderTotal"/>
+                </form-list-column>
+
+            </form-list>
+        </widgets></section>
+    </widgets>
+</screen>

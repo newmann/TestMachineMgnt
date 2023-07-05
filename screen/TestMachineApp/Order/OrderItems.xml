@@ -368,15 +368,18 @@ along with this software (see the LICENSE.md file). If not, see
                 <default-field title=""><display text=" "/></default-field>
             </field>
 
-            <field name="editButton"><default-field title="Actions">
-                <dynamic-dialog id="EditItemDialog" button-text="Edit" transition="EditItem">
-                    <parameter name="orderId"/><parameter name="orderItemSeqId" from="orderItem.orderItemSeqId"/></dynamic-dialog>
-                <link url="deleteItem" text="" btn-type="danger" icon="fa fa-trash" condition="partEditable &amp;&amp; itemCanDelete" confirmation="Delete item ${orderItemSeqId}?"/>
-                <link url="cancelOrderItem" text="Close" btn-type="warning" link-type="hidden-form"
-                        confirmation="Really close item? Quantity will be reduced to quantity shipped and remaining quantity will be cancelled."
-                        condition="isProductItemType &amp;&amp; itemQuantityNotShipped &amp;&amp; orderPart.statusId in ['OrderOpen', 'OrderPlaced', 'OrderProcessing', 'OrderApproved', 'OrderHold']"
-                        parameter-map="[orderItem:null]"/>
-            </default-field></field>
+            <field name="editButton">
+                <conditional-field condition="partEditable" title="Actions">
+                    <dynamic-dialog id="EditItemDialog" button-text="Edit" transition="EditItem">
+                        <parameter name="orderId"/><parameter name="orderItemSeqId" from="orderItem.orderItemSeqId"/></dynamic-dialog>
+                    <link url="deleteItem" text="" btn-type="danger" icon="fa fa-trash" condition="partEditable &amp;&amp; itemCanDelete" confirmation="Delete item ${orderItemSeqId}?"/>
+                    <link url="cancelOrderItem" text="Close" btn-type="warning" link-type="hidden-form"
+                            confirmation="Really close item? Quantity will be reduced to quantity shipped and remaining quantity will be cancelled."
+                            condition="isProductItemType &amp;&amp; itemQuantityNotShipped &amp;&amp; orderPart.statusId in ['OrderOpen', 'OrderPlaced', 'OrderProcessing', 'OrderApproved', 'OrderHold']"
+                            parameter-map="[orderItem:null]"/>
+                </conditional-field>
+                <default-field title=""><display text=" "/></default-field>
+            </field>
 
             <field name="findButton"><header-field title="Find"><submit/></header-field></field>
 

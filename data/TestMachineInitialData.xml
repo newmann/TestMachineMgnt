@@ -13,13 +13,13 @@ along with this software (see the LICENSE.md file). If not, see
 <http://creativecommons.org/publicdomain/zero/1.0/>.
 -->
 <entity-facade-xml type="seed-initial">
-    <moqui.basic.Enumeration description="Test Machine" enumId="AsTpTestMachine" enumTypeId="AssetType"/>
+    <moqui.basic.Enumeration description="Test Machine" enumId="AstTpTestMachine" enumTypeId="AssetType"/>
     <moqui.basic.LocalizedEntityField entityName="moqui.basic.Enumeration" fieldName="description"
-                                      pkValue="AsTpTestMachine" locale="zh_CN" localized="样机" />
+                                      pkValue="AstTpTestMachine" locale="zh_CN" localized="样机" />
 
-    <moqui.basic.Enumeration description="Test Machine" enumId="AsClsTestMachine" enumTypeId="AssetClass"/>
+    <moqui.basic.Enumeration description="Test Machine" enumId="AstClsTestMachine" enumTypeId="AssetClass"/>
     <moqui.basic.LocalizedEntityField entityName="moqui.basic.Enumeration" fieldName="description"
-                                      pkValue="AsClsTestMachine" locale="zh_CN" localized="样机" />
+                                      pkValue="AstClsTestMachine" locale="zh_CN" localized="样机" />
 
     <moqui.basic.Enumeration description="Test Machine" enumId="PclsTestMachine" enumTypeId="ProductClass"/>
     <moqui.basic.LocalizedEntityField entityName="moqui.basic.Enumeration" fieldName="description"
@@ -45,12 +45,12 @@ along with this software (see the LICENSE.md file). If not, see
     <moqui.basic.Enumeration description="TestMachine Take Back Shipment" parentEnumId="ShpTpIncoming" enumId="ShpTpTestMachineTakeBack" enumTypeId="ShipmentType"/>
 
     <moqui.basic.LocalizedEntityField entityName="moqui.basic.Enumeration" fieldName="description"
-                                      pkValue="ShpTpTestMachineRequest" locale="zh_CN" localized="样机申请发货" />
+                                      pkValue="ShpTpTestMachineRequest" locale="zh_CN" localized="样机申请出库" />
 
     <moqui.basic.LocalizedEntityField entityName="moqui.basic.Enumeration" fieldName="description"
-                                      pkValue="ShpTpTestMachinePurchase" locale="zh_CN" localized="样机采购收货" />
+                                      pkValue="ShpTpTestMachinePurchase" locale="zh_CN" localized="样机采购入库" />
 
     <moqui.basic.LocalizedEntityField entityName="moqui.basic.Enumeration" fieldName="description"
-                                      pkValue="ShpTpTestMachineTakeBack" locale="zh_CN" localized="样机回收收货" />
+                                      pkValue="ShpTpTestMachineTakeBack" locale="zh_CN" localized="样机回收入库" />
 
 </entity-facade-xml>
