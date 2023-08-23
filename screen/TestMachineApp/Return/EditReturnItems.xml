@@ -30,7 +30,8 @@ along with this software (see the LICENSE.md file). If not, see
     <transition name="createReturnShipment"><service-call name="mantle.order.ReturnServices.create#ReturnShipment"/>
         <default-response url="."/></transition>
 
-    <transition name="salesOrderDetail"><default-response url="//${appRoot}/Order/OrderDetail"/></transition>
+<!--    <transition name="orderDetail"><default-response url="//${appRoot}/Order/OrderDetail"/></transition>-->
+    <transition-include name="orderDetail" location="component://TestMachineMgnt/template/order/OrderTransitions.xml"/>
     <transition name="editFinancialAccount"><default-response url="//${appRoot}/Accounting/FinancialAccount/EditFinancialAccount"/></transition>
     <transition name="editPayment"><default-response url="//${appRoot}/Accounting/Payment/EditPayment"/></transition>
     <transition name="editInvoice"><default-response url="//${appRoot}/Accounting/Invoice/EditInvoice"/></transition>
@@ -193,7 +194,7 @@ along with this software (see the LICENSE.md file). If not, see
                 <conditional-field condition="itemChangeable"><text-line size="30"/></conditional-field>
                 <default-field><display/></default-field></field>
             <field name="orderItem"><default-field>
-                <link url="salesOrderDetail" text="${orderId}:${orderItemSeqId}" link-type="anchor"
+                <link url="orderDetail" text="${orderId}:${orderItemSeqId}" link-type="anchor"
                       condition="orderId"/></default-field></field>
             <field name="returnQuantity">
                 <conditional-field condition="itemChangeable &amp;&amp; !responseAmount"><text-line size="4"/></conditional-field>
@@ -220,7 +221,7 @@ along with this software (see the LICENSE.md file). If not, see
             </default-field></field>
             <field name="responseDate"><default-field><display/></default-field></field>
             <field name="replacementOrderId"><default-field title="Replacement Order">
-                <link url="salesOrderDetail" text="${replacementOrderId}" link-type="anchor" condition="replacementOrderId"
+                <link url="orderDetail" text="${replacementOrderId}" link-type="anchor" condition="replacementOrderId"
                       parameter-map="[orderId:replacementOrderId]"/></default-field></field>
 
             <field name="responseAmount"><default-field><display currency-unit-field="returnHeader.currencyUomId"/></default-field></field>

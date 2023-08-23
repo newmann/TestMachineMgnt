@@ -15,23 +15,23 @@ along with this software (see the LICENSE.md file). If not, see
 <screen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-3.xsd"
         default-menu-include="false" standalone="true">
 
-    <parameter name="testMachineOrderId" required="true"/>
+    <parameter name="orderId" required="true"/>
     <parameter name="orderItemSeqId" required="true"/>
     <parameter name="pageIndex"/>
 
-    <transition name="addOrderItemToReturn"><service-call name="beiyelin.testmachine.TestMachineReturnServices.add#OrderItemToReturn"/>
+    <transition name="addOrderItemToReturn"><service-call name="mantle.order.ReturnServices.add#OrderItemToReturn"/>
         <default-response url=".."/></transition>
 
     <actions>
-        <entity-find-one entity-name="beiyelin.testmachine.TestMachineOrderItem" value-field="orderItem"/>
-        <service-call name="beiyelin.testmachine.TestMachineReturnServices.calculate#OrderItemReturnable" out-map="returnableOut"
-                in-map="[testMachineOrderId:testMachineOrderId, orderItemSeqId:orderItem.orderItemSeqId]"/>
-        <service-call name="beiyelin.testmachine.TestMachineReturnServices.find#OrderOpenReturns" out-map="openReturnsOut"
-                in-map="[testMachineOrderId:testMachineOrderId, orderPartSeqId:orderItem.orderPartSeqId]"/>
+        <entity-find-one entity-name="mantle.order.OrderItem" value-field="orderItem"/>
+        <service-call name="mantle.order.ReturnServices.calculate#OrderItemReturnable" out-map="returnableOut"
+                in-map="[orderId:orderId, orderItemSeqId:orderItem.orderItemSeqId]"/>
+        <service-call name="mantle.order.ReturnServices.find#OrderOpenReturns" out-map="openReturnsOut"
+                in-map="[orderId:orderId, orderPartSeqId:orderItem.orderPartSeqId]"/>
     </actions>
     <widgets>
         <form-single name="ReturnItem" transition="addOrderItemToReturn">
-            <field name="testMachineOrderId"><default-field><hidden/></default-field></field>
+            <field name="orderId"><default-field><hidden/></default-field></field>
             <field name="pageIndex"><default-field><hidden/></default-field></field>
 
             <field name="orderItemSeqId"><default-field title="Item"><display/></default-field></field>

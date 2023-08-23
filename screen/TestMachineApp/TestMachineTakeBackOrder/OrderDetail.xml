@@ -150,7 +150,7 @@ along with this software (see the LICENSE.md file). If not, see
         <script>ec.web.sendTextResponse(emailMessage?.body, "text/html", null)</script>
     </actions><default-response type="none"/></transition>
     <transition name="PrintOrder.pdf">
-        <default-response url="${ec.web.getWebappRootUrl(false, null)}/fop/apps/${appRoot}/Order/PrintOrder" url-type="plain">
+        <default-response url="${ec.web.getWebappRootUrl(false, null)}/fop/apps/${appRoot}/TestMachineTakeBackOrder/PrintOrder" url-type="plain">
             <parameter name="renderMode" value="xsl-fo"/><parameter name="pageNoLimit" value="true"/>
             <parameter name="orderId"/><parameter name="filename" value="Order-${orderId}.pdf"/>
         </default-response>

@@ -20,7 +20,8 @@ along with this software (see the LICENSE.md file). If not, see
     <parameter name="filterProductId"/><parameter name="onlyRemaining"/>
     <parameter name="pageIndex"/>
 
-    <transition name="orderDetail"><default-response url="//${appRoot}/Order/OrderDetail"/></transition>
+<!--    <transition name="orderDetail"><default-response url="//${appRoot}/Order/OrderDetail"/></transition>-->
+    <transition-include name="orderDetail" location="component://TestMachineMgnt/template/order/OrderTransitions.xml"/>
     <transition name="editInvoice"><default-response url="//${appRoot}/Accounting/Invoice/EditInvoice"/></transition>
     <transition name="editTransaction"><default-response url="//${appRoot}/Accounting/Transaction/EditTransaction"/></transition>
     <transition name="editProduct"><default-response url="//${appRoot}/Product/EditProduct"/></transition>

@@ -155,10 +155,10 @@ along with this software (see the LICENSE.md file). If not, see
             <key-value related="changedFieldName" value="statusId"/>
         </relationship>
 
-        <index name="ORDERDISP_ID_IDX">
+        <index name="TMMORDERDISP_ID_IDX">
             <index-field name="displayId"/>
         </index>
-        <index name="ORDERORIG_ID_IDX">
+        <index name="TMMORDERORIG_ID_IDX">
             <index-field name="originId"/>
         </index>
 
@@ -476,7 +476,7 @@ along with this software (see the LICENSE.md file). If not, see
             <key-map field-name="testMachineReturnId"/>
             <key-map field-name="testMachineReturnItemSeqId"/>
         </relationship>
-        <index name="RTN_ITM_BYORDITM">
+        <index name="TMM_RTN_ITM_BYORDITM">
             <index-field name="testMachineOrderId"/>
             <index-field name="testMachineOrderItemSeqId"/>
         </index>

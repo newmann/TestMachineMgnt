@@ -20,7 +20,7 @@ along with this software (see the LICENSE.md file). If not, see
 
     <transition name="editProduct"><default-response url="//${appRoot}/Product/EditProduct"/></transition>
 
-    <transition name="editOrderDetail"><default-response url="//${appRoot}/Order/OrderDetail"/></transition>
+    <transition name="editOrderDetail"><default-response url="//${appRoot}/TestMachineSalesOrder/OrderDetail"/></transition>
 
     <transition name="setItemQuantities">
 
@@ -232,7 +232,7 @@ along with this software (see the LICENSE.md file). If not, see
                 </field>
                 <field name="borrowOrder">
                     <default-field title="Original Order">
-                        <link url="//${appRoot}/Order/OrderDetail" parameter-map="[orderId:orderId]" text="${orderId}:${orderItemSeqId}" link-type="anchor"/>
+                        <link url="//${appRoot}/TestMachineSalesOrder/OrderDetail" parameter-map="[orderId:orderId]" text="${orderId}:${orderItemSeqId}" link-type="anchor"/>
                     </default-field>
                 </field>
 

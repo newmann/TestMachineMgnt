@@ -13,13 +13,13 @@ along with this software (see the LICENSE.md file). If not, see
 <http://creativecommons.org/publicdomain/zero/1.0/>.
 -->
 <screen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-3.xsd"
-        default-menu-title="Test Machine Orders" default-menu-index="99" menu-image="/ssstatic/images/Sales.png">
+        default-menu-title="Orders" default-menu-index="6" menu-image="/ssstatic/images/Sales.png" default-menu-include="false">
 
     <subscreens default-item="FindOrder">
 
     </subscreens>
     <widgets>
-        <label text="Test Machine Order ${orderId}" type="strong" condition="orderId"/>
+<!--        <label text="Order ${orderId}" type="strong" condition="orderId"/>-->
         <subscreens-panel id="OrderPanel" type="tab"/>
     </widgets>
 </screen>

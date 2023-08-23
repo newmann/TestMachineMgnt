@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+This software is in the public domain under CC0 1.0 Universal plus a 
+Grant of Patent License.
+
+To the extent possible under law, the author(s) have dedicated all
+copyright and related and neighboring rights to this software to the
+public domain worldwide. This software is distributed without any
+warranty.
+
+You should have received a copy of the CC0 Public Domain Dedication
+along with this software (see the LICENSE.md file). If not, see
+<http://creativecommons.org/publicdomain/zero/1.0/>.
+-->
+<screen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-3.xsd"
+        default-menu-title="Testing" default-menu-index="14" menu-image="/tmmstatic/images/Customer.png">
+
+<!--    <transition name="getFileContends">
+        <actions><script><![CDATA[
+            ec.web.sendJsonResponse([filePath:filePath])
+            ]]></script></actions>
+        <default-response type="none" ></default-response>
+    </transition>-->
+
+    <actions>
+        <set field="entityFileList" from="ec.entity.getAllEntityFileLocations()"/>
+        <set field="filePath" value="none"/>
+        <message type="warning">${entityInfoList}</message>
+    </actions>
+    <widgets>
+        <container-row>
+            <row-col lg="6" md="6" >
+                <label text="Entity Files List:" type="h3"/>
+                <form-list name="EntityFilesList" list="entityFileList" list-entry="entityFile">
+                    <field name="filePath" from="entityFile">
+                        <default-field title="File Path">
+                            <display/>
+                            <link url="FileContend" text="Go"  dynamic-load-id="DisplayFileContent">
+                                <parameter name="filePath" from="entityFile"/>
+                            </link>
+                        </default-field>
+                    </field>
+                </form-list>
+
+            </row-col>
+            <row-col lg="6" md="6" >
+                <dynamic-container id="DisplayFileContent" transition="FileContend" />
+            </row-col>
+        </container-row>
+<!--
+        <section-iterate name="EntityFilesList" list="entityFileList" entry="entityFile">
+            <widgets>
+                <label text="${entityFile}" type="pre"/>
+            </widgets>
+        </section-iterate>
+-->
+    </widgets>
+</screen>

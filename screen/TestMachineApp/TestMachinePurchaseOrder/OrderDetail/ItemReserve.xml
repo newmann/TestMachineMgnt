@@ -15,7 +15,7 @@ along with this software (see the LICENSE.md file). If not, see
 <screen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-3.xsd"
         default-menu-include="false" standalone="true">
 
-    <parameter name="testMachineOrderId" required="true"/>
+    <parameter name="orderId" required="true"/>
     <parameter name="orderItemSeqId" required="true"/>
     <parameter name="pageIndex"/>
 
@@ -24,27 +24,28 @@ along with this software (see the LICENSE.md file). If not, see
     <transition-include name="getAssetList" location="component://SimpleScreens/template/product/ProductTransitions.xml"/>
 
     <actions>
-        <entity-find-one entity-name="beiyelin.testmachine.TestMachineOrderItem" value-field="testMachineOrderItem"/>
-
+        <entity-find-one entity-name="mantle.order.OrderItem" value-field="orderItem"/>
+        <set field="orderPart" from="orderItem.part"/>
     </actions>
     <widgets>
         <form-single name="ReserveItem" transition="reserveAssetForOrderItem">
-            <field name="testMachineOrderId"><default-field><hidden/></default-field></field>
+            <field name="orderId"><default-field><hidden/></default-field></field>
+            <field name="orderPartSeqId"><default-field><hidden/></default-field></field>
             <field name="pageIndex"><default-field><hidden/></default-field></field>
 
             <field name="orderItemSeqId"><default-field title="Item"><display/></default-field></field>
 
-            <field name="productId" from="testMachineOrderItem.productId"><default-field title="Product">
+            <field name="productId" from="orderItem.productId"><default-field title="Product">
                 <display-entity entity-name="mantle.product.Product" text="ProductNameTemplate"/></default-field></field>
-            <field name="orderQuantity" from="testMachineOrderItem.quantity"><default-field><display/></default-field></field>
+            <field name="orderQuantity" from="orderItem.quantity"><default-field><display/></default-field></field>
 
             <field name="assetId"><default-field title="Asset">
                 <drop-down allow-empty="true"><dynamic-options transition="getAssetList" server-search="true" min-length="0"
-                        parameter-map="[facilityId:testMachineOrderItem.facilityId, productId:testMachineOrderItem.productId, assetTypeEnumId:null, excludeZeroQoh:'true']"/></drop-down>
+                        parameter-map="[facilityId:orderPart.facilityId, productId:orderItem.productId, assetTypeEnumId:null, excludeZeroQoh:'true']"/></drop-down>
             </default-field></field>
             <field name="assetIdList"><default-field title="Other Assets">
                 <drop-down allow-multiple="true"><dynamic-options transition="getAssetList" server-search="true" min-length="0"
-                    parameter-map="[facilityId:testMachineOrderItem.facilityId, productId:testMachineOrderItem.productId, assetTypeEnumId:null, excludeZeroQoh:'true']"/></drop-down>
+                    parameter-map="[facilityId:orderPart.facilityId, productId:orderItem.productId, assetTypeEnumId:null, excludeZeroQoh:'true']"/></drop-down>
             </default-field></field>
 
             <field name="resetReservations"><default-field title="">

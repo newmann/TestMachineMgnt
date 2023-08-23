@@ -30,7 +30,8 @@ along with this software (see the LICENSE.md file). If not, see
     <transition name="editParty"><default-response url="//${appRoot}/Party/EditParty"/></transition>
 
     <transition name="editFinancialAccount"><default-response url="//${appRoot}/Accounting/FinancialAccount/EditFinancialAccount"/></transition>
-    <transition name="orderDetail"><default-response url="//${appRoot}/Order/OrderDetail"/></transition>
+<!--    <transition name="orderDetail"><default-response url="//${appRoot}/Order/OrderDetail"/></transition>-->
+    <transition-include name="orderDetail" location="component://TestMachineMgnt/template/order/OrderTransitions.xml"/>
     <transition name="shipmentDetail"><default-response url="//${appRoot}/Shipment/ShipmentDetail"/></transition>
     <transition name="editPayment"><default-response url="//${appRoot}/Accounting/Payment/EditPayment"/></transition>
     <transition name="editInvoice"><default-response url="//${appRoot}/Accounting/Invoice/EditInvoice"/></transition>

@@ -15,6 +15,12 @@ along with this software (see the LICENSE.md file). If not, see
 <screen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-3.xsd"
         include-child-content="true" require-authentication="true" menu-image="fa fa-flash" menu-image-type="icon">
+    <pre-actions>
+        <script><![CDATA[
+            html_scripts.add('/libs/moment.js/moment-with-locales.min.js')
+//            footer_scripts.add('/js/TestMachineVue.qvt.js')
+            ]]></script>
+    </pre-actions>
     <always-actions>
         <set field="appRoot" value="testmachine"/>
 
@@ -29,6 +35,8 @@ along with this software (see the LICENSE.md file). If not, see
     </always-actions>
 
     <subscreens default-item="dashboard" always-use-full-path="true">
+        <subscreens-item name="dashboard" location="component://TestMachineMgnt/screen/TestMachineApp/dashboard.xml" menu-index="1"/>
+
         <subscreens-item name="QuickSearch" location="component://SimpleScreens/screen/SimpleScreens/QuickSearch.xml" menu-index="2"/>
 
         <subscreens-item name="Catalog" location="component://SimpleScreens/screen/SimpleScreens/Catalog.xml" menu-index="3"/>
@@ -42,9 +50,14 @@ along with this software (see the LICENSE.md file). If not, see
         <subscreens-item name="Supplier" location="component://SimpleScreens/screen/SimpleScreens/Supplier.xml" menu-index="8"/>
         <subscreens-item name="Accounting" location="component://SimpleScreens/screen/SimpleScreens/Accounting.xml" menu-index="9"/>
 
-        <subscreens-item name="Order" location="component://TestMachineMgnt/screen/TestMachineApp/Order.xml" menu-index="10"/>
-        <subscreens-item name="Return" location="component://TestMachineMgnt/screen/TestMachineApp/Return.xml" menu-index="11"/>
-        <subscreens-item name="TakeBackOrder" location="component://TestMachineMgnt/screen/TestMachineApp/TestMachineTakeBackOrder.xml" menu-index="11"/>
+
+        <subscreens-item name="TestMachinePurchaseOrder" location="component://TestMachineMgnt/screen/TestMachineApp/TestMachinePurchaseOrder.xml" menu-index="10"/>
+        <subscreens-item name="TestMachineRequestOrder" location="component://TestMachineMgnt/screen/TestMachineApp/TestMachineRequestOrder.xml" menu-index="11"/>
+        <subscreens-item name="TestMachineTakeBackOrder" location="component://TestMachineMgnt/screen/TestMachineApp/TestMachineTakeBackOrder.xml" menu-index="12"/>
+        <subscreens-item name="TestMachineSalesOrder" location="component://TestMachineMgnt/screen/TestMachineApp/TestMachineSalesOrder.xml" menu-index="13"/>
+        <subscreens-item name="Return" location="component://TestMachineMgnt/screen/TestMachineApp/Return.xml" menu-index="19"/>
+
+        <subscreens-item name="Order" location="component://TestMachineMgnt/screen/TestMachineApp/Order.xml" menu-index="19" menu-include="false"/>
 
         <subscreens-item name="Shipment" location="component://TestMachineMgnt/screen/TestMachineApp/Shipment.xml" menu-index="21"/>
         <subscreens-item name="Shipping" location="component://TestMachineMgnt/screen/TestMachineApp/Shipping.xml" menu-index="22"/>
@@ -53,6 +66,7 @@ along with this software (see the LICENSE.md file). If not, see
 
         <subscreens-item name="Entity" location="component://TestMachineMgnt/screen/TestMachineApp/Entity.xml" menu-index="91"/>
         <subscreens-item name="Service" location="component://TestMachineMgnt/screen/TestMachineApp/Service.xml" menu-index="92"/>
+        <subscreens-item name="ScreenCapture" location="component://TestMachineMgnt/screen/TestMachineApp/ScreenCapture.xml" menu-index="93"/>
 
 <!--        <subscreens-item name="TestMachineOrder" location="component://TestMachineMgnt/screen/TestMachineApp/TestMachineOrder.xml" menu-include="false"/>-->
 <!--        <subscreens-item name="TestMachineReturn" location="component://TestMachineMgnt/screen/TestMachineApp/TestMachineReturn.xml" menu-include="false"/>-->

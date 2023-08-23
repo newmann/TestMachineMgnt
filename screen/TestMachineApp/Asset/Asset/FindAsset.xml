@@ -19,8 +19,8 @@ along with this software (see the LICENSE.md file). If not, see
     <transition name="editProduct"><default-response url="//${appRoot}/Catalog/Product/EditProduct"/></transition>
     <transition name="editFacility"><default-response url="//${appRoot}/Facility/EditFacility"/></transition>
     <transition name="editContainer"><default-response url="//${appRoot}/Asset/Container/EditContainer"/></transition>
-    <transition name="orderDetail"><default-response url="//${appRoot}/Order/OrderDetail"/></transition>
-
+<!--    <transition name="orderDetail"><default-response url="//${appRoot}/Order/OrderDetail"/></transition>-->
+    <transition-include name="orderDetail" location="component://TestMachineMgnt/template/order/OrderTransitions.xml"/>
     <transition name="createEquipment"><service-call name="mantle.product.EquipmentServices.create#Equipment"/>
         <default-response url="../AssetDetail"/></transition>
     <transition name="updateProductAcquireCost"><service-call name="mantle.product.AssetServices.update#ProductAcquireCost"/>

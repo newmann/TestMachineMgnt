@@ -15,13 +15,13 @@ along with this software (see the LICENSE.md file). If not, see
 <screen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-3.xsd"
         default-menu-include="false" standalone="true">
 
-    <parameter name="testMachineOrderId" required="true"/>
+    <parameter name="orderId" required="true"/>
 
     <actions>
-        <service-call name="beiyelin.testmachine.TestMachineOrderInfoServices.get#TestMachineOrderDisplayInfo" in-map="[testMachineOrderId:testMachineOrderId]" out-map="context"/>
+        <service-call name="mantle.order.OrderInfoServices.get#OrderDisplayInfo" in-map="[orderId:orderId]" out-map="context"/>
 
         <if condition="!templateLocation">
-            <set field="templateLocation" value="component://TestMachineMgnt/template/TestMachineOrder.xsl-fo.ftl"/></if>
+            <set field="templateLocation" value="component://SimpleScreens/template/TestMachineRequestOrder/Order.xsl-fo.ftl"/></if>
     </actions>
     <widgets>
         <render-mode>

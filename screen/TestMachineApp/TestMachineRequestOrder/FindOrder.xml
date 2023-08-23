@@ -14,18 +14,20 @@ along with this software (see the LICENSE.md file). If not, see
 -->
 <screen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-3.xsd"
-        default-menu-title="Find Test Machine Order" default-menu-include="false">
+        default-menu-title="Find Order" default-menu-include="false">
 
-    <transition name="testMachineOrderDetail">
-        <default-response url="../TestMachineOrderDetail"/>
+    <transition name="orderDetail">
+        <default-response url="../OrderDetail"/>
     </transition>
-    <transition name="createTestMachineOrder">
-        <service-call name="beiyelin.testmachine.TestMachineOrderServices.create#TestMachineOrder"/>
-        <default-response url="../TestMachineOrderDetail"/>
+    <transition name="createOrder">
+        <service-call name="mantle.order.OrderServices.create#Order"/>
+        <default-response url="../OrderDetail"/>
     </transition>
-    <transition name="changeTestMachineOrderStatus"><service-call name="beiyelin.testmachine.TestMachineOrderBulkServices.change#TestMachineOrderStatus"/>
-        <default-response url="."/></transition>
-    
+    <transition name="changeOrderPartsStatus">
+        <service-call name="mantle.order.OrderBulkServices.change#OrderPartsStatus"/>
+        <default-response url="."/>
+    </transition>
+
     <transition name="editFacility">
         <default-response url="//${appRoot}/Facility/EditFacility"/>
     </transition>
@@ -51,14 +53,29 @@ along with this software (see the LICENSE.md file). If not, see
 
     <transition name="getWhFacilitiesByOwner">
         <service-call name="mantle.facility.FacilityServices.get#FacilitiesByOwner"
-                      in-map="[ownerPartyId:(vendorPartyId ?: custmoerPartyId), facilityTypeEnumId:'FcTpWarehouse']"
+                      in-map="[ownerPartyId:(customerPartyId ?: vendorPartyId), productStoreId:productStoreId, facilityTypeEnumId:'FcTpWarehouse']"
                       web-send-json-response="resultList"/>
         <default-response type="none"/>
     </transition>
-    <transition name="getSupplerOrAllOrgInternal">
+    <transition name="getStoreOrgOrAllOrgInternal">
+        <parameter name="productStoreId"/>
         <actions>
+            <if condition="productStoreId">
+                <entity-find-one entity-name="mantle.product.store.ProductStore" value-field="productStore">
+                    <field-map field-name="productStoreId"/>
+                </entity-find-one>
+                <if condition="productStore != null">
+                    <entity-find-one entity-name="mantle.party.PartyDetail" value-field="orgParty">
+                        <field-map field-name="partyId" from="productStore.organizationPartyId"/>
+                    </entity-find-one>
+                    <if condition="orgParty != null">
+                        <script>ec.web.sendJsonResponse([[value: orgParty.partyId, label: ec.resource.expand("PartyNameTemplate", "", orgParty)]])</script>
+                        <return/>
+                    </if>
+                </if>
+            </if>
             <entity-find entity-name="mantle.party.PartyDetailAndRole" list="partyList">
-                <econdition field-name="roleTypeId" operator="in" value="('OrgInternal','Supplier','Vendor')"/>
+                <econdition field-name="roleTypeId" value="OrgInternal"/>
                 <econdition field-name="disabled" value="N" or-null="true"/>
                 <order-by field-name="organizationName"/>
             </entity-find>
@@ -72,80 +89,108 @@ along with this software (see the LICENSE.md file). If not, see
     </transition>
 
     <actions>
+        <!--        <set field="itemTypeEnumId" from="'ItemTestMachine'"/>-->
+        <set field="onlyProductQuantityBool" from="'true'.equals(onlyProductQuantity)"/>
+        <!--        <if condition="onlyProductQuantityBool || inventoryAvailable == 'none'">-->
+        <!--            <entity-find entity-name="moqui.basic.EnumGroupMember" list="productItemTypeEgms" cache="true">-->
+        <!--                <econdition field-name="enumGroupEnumId" value="EngItemsProduct"/></entity-find>-->
+        <!--            <set field="itemTypeEnumId" from="productItemTypeEgms*.enumId.join(',')"/>-->
+        <!--            &lt;!&ndash; NOTE might be better: if itemTypeEnumId specified create a Set containing only types in both &ndash;&gt;-->
+        <!--        </if>-->
 
-        <set field="requestRole" value="SalesRepresentative"/>
-        <set field="vendorRole" value="OrgInternal,Supplier,Vendor"/>
-        <set field="customerRole" value="OrgInternal,Customer"/>
+        <set field="curOrderTypeEnumId" from="'OtTestMachineRequest'"/>
+        <set field="curStatusFlowId" value="TestMachineRequest"/>
 
+        <set field="vendorRole" value="Supplier,Vendor,VendorBillFrom"/>
+        <set field="customerRole" value="Customer,CustomerBillTo"/>
+
+        <!-- default store, make sure exists (and exists for this user) -->
+        <set field="defaultProductStoreId" from="ec.user.getPreference('OrderSalesStoreDefault')"/>
+        <if condition="defaultProductStoreId">
+            <entity-find-one entity-name="mantle.product.store.ProductStore" value-field="defaultProductStore">
+                <field-map field-name="productStoreId" from="defaultProductStoreId"/>
+            </entity-find-one>
+            <if condition="defaultProductStore == null">
+                <set field="defaultProductStoreId" from="null"/>
+            </if>
+        </if>
+        <!-- default facility, make sure exists (and exists for this user) -->
+        <set field="defaultFacilityId" from="ec.user.getPreference('FacilityGeneralDefault')"/>
+        <if condition="defaultFacilityId">
+            <entity-find-one entity-name="mantle.facility.Facility" value-field="defaultFacility">
+                <field-map field-name="facilityId" from="defaultFacilityId"/>
+            </entity-find-one>
+            <if condition="defaultFacility == null">
+                <set field="defaultFacilityId" from="null"/>
+            </if>
+        </if>
     </actions>
     <widgets>
         <container-row>
             <row-col md="5">
-                <container-dialog id="CreateTestMachineOrderDialog" button-text="Create Test Machine Order">
-                    <form-single name="CreateTestMachineOrder" transition="createTestMachineOrder" map="testMachineOrder">
-                        <field name="vendorPartyId">
-                            <default-field title="Vendor Org" tooltip="至少输入发货方代码的前两位后再查找">
-                                <drop-down allow-empty="true">
-                                        <dynamic-options transition="searchPartyList" server-search="true" min-length="2"
-                                                         parameter-map="[roleTypeId:vendorRole]"/>
-
-<!--                                    <dynamic-options transition="getSupplerOrAllOrgInternal">-->
-<!--                                    </dynamic-options>-->
-                                </drop-down>
+                <container-dialog id="CreateTestMachineRequestOrderDialog"
+                                  button-text="Create Test Machine Request Order">
+                    <form-single name="CreateTestMachineRequestOrder" transition="createOrder">
+                        <field name="orderTypeEnumId" from="curOrderTypeEnumId">
+                            <default-field>
+                                <hidden />
                             </default-field>
                         </field>
-                        <field name="vendorFacilityId" >
-                            <default-field title="发货仓库">
-                                <drop-down allow-empty="true">
-                                    <dynamic-options  transition="getWhFacilitiesByOwner" value-field="facilityId"
-                                                      label-field="label" depends-optional="true"
-                                                      parameter-map="[ownerPartyId:vendorPartyId]">
-
-                                        <depends-on field="vendorPartyId"/>
-                                    </dynamic-options>
-                                </drop-down>
+                        <field name="statusFlowId" from="curStatusFlowId">
+                            <default-field>
+                                <hidden/>
                             </default-field>
                         </field>
-                        <field name="customerPartyId" >
-                            <default-field title="Customer" tooltip="至少输入客户代码的前两位后再查找">
+                        <!--                    <field name="productStoreId" from="productStoreId ?: defaultProductStoreId"><default-field title="Store">-->
+                        <!--                        <drop-down allow-empty="true">-->
+                        <!--                            <entity-options key="${productStoreId}" text="${productStoreId}: ${storeName}">-->
+                        <!--                                <entity-find entity-name="mantle.product.store.ProductStore">-->
+                        <!--                                    <order-by field-name="storeName"/></entity-find></entity-options>-->
+                        <!--                        </drop-down>-->
+                        <!--                    </default-field></field>-->
+                        <field name="customerPartyId">
+                            <default-field title="Requesting Customer">
                                 <drop-down allow-empty="true">
                                     <dynamic-options transition="searchPartyList" server-search="true" min-length="2"
-                                                     parameter-map="[roleTypeId:customerRole]"/>
-                                </drop-down>
-                            </default-field>
-                        </field>
-                        <field name="customerFacilityId"  >
-                            <default-field title="收货仓库">
-                                <drop-down allow-empty="true">
-                                    <dynamic-options transition="getWhFacilitiesByOwner" value-field="facilityId"
-                                                     label-field="label" depends-optional="true" parameter-map="[ownerPartyId:customerPartyId]">
-                                        <depends-on field="customerPartyId"/>
-                                    </dynamic-options>
-                                </drop-down>
-                            </default-field>
-                        </field>
-                        <field name="requestDate">
-                            <default-field>
-                                <date-time/>
-                            </default-field>
-                        </field>
-                        <field name="requestPartyId" >
-                            <default-field title="Requested By" >
-                                <drop-down allow-empty="true">
-                                    <dynamic-options transition="searchPartyList" server-search="true"
-                                                     min-length="0"
-                                                     parameter-map="[roleTypeId:requestRole]"/>
+                                                     parameter-map="[roleTypeId:'Customer']"/>
                                 </drop-down>
                             </default-field>
                         </field>
 
-                        <field name="shipBeforeDate">
-                            <default-field>
+                        <field name="vendorPartyId">
+                            <default-field title="Internal Org">
+                                <drop-down>
+                                    <dynamic-options transition="getStoreOrgOrAllOrgInternal" depends-optional="true">
+                                        <depends-on field="productStoreId"/>
+                                    </dynamic-options>
+                                </drop-down>
+                            </default-field>
+                        </field>
+                        <field name="facilityId"
+                               from="facilityId ?: (!defaultProductStoreId ? defaultFacilityId : null)">
+                            <default-field title="Outgoing Facility">
+                                <drop-down>
+                                    <dynamic-options transition="getWhFacilitiesByOwner" value-field="facilityId"
+                                                     label-field="label" depends-optional="true">
+                                        <depends-on field="vendorPartyId"/>
+                                        <!--                            <depends-on field="productStoreId"/>-->
+                                    </dynamic-options>
+                                </drop-down>
+                            </default-field>
+                        </field>
+                        <!--                    <field name="otherPartyOrderId"><default-field title="Their Order ID"><text-line size="40"/></default-field></field>-->
+                        <!--                    <field name="priority"><default-field><radio no-current-selected-key="5">-->
+                        <!--                        <option key="1"/><option key="2"/><option key="3"/><option key="4"/><option key="5"/>-->
+                        <!--                        <option key="6"/><option key="7"/><option key="8"/><option key="9"/>-->
+                        <!--                    </radio></default-field></field>-->
+
+                        <field name="estimatedDeliveryDate">
+                            <default-field title="Delivery Date">
                                 <date-time/>
                             </default-field>
                         </field>
-                        <field name="estimatedDeliveryDate">
-                            <default-field title="Delivery Date">
+                        <field name="planTakeBackDate">
+                            <default-field title="Plan Take Back Date">
                                 <date-time/>
                             </default-field>
                         </field>
@@ -156,94 +201,35 @@ along with this software (see the LICENSE.md file). If not, see
                         </field>
                     </form-single>
                 </container-dialog>
-<!--                <link url="../SalesAnalysis" text="Sales Analysis Report"
-                      parameter-map="[customerPartyId:customerPartyId]"/>
-                <link url="../SalesSummary" text="Sales Summary Charts"
-                      parameter-map="[customerPartyIds:customerPartyId]"/>
-                <link url="../OrderIssuedInvoiced" text="Issued and Invoiced Report"
-                      parameter-map="[customerPartyId:customerPartyId]"/>-->
 
-            </row-col>
-            <row-col md="7" style="text-right">
 
-                <section name="ApproveOrdersSection" condition="statusId &amp;&amp; (statusId.contains('TMOHSConfirmed') )">
-                    <widgets>
-                        <container-dialog id="ApproveOrdersDialog" button-text="Approve Orders">
-                            <label text="Approves orders matching current find options. Use the Find Options dialog to adjust as needed before doing this."
-                                   type="p"/>
-                            <form-single name="ApproveOrdersForm" transition="changeTestMachineOrderStatus"
-                                         pass-through-parameters="true">
-                                <field name="toStatusId" from="'TMOHSApproved'">
-                                    <default-field>
-                                        <hidden/>
-                                    </default-field>
-                                </field>
-                                <field name="submitButton">
-                                    <default-field title="Approve Orders">
-                                        <submit confirmation="Do the current find options and orders displayed match what you want to approve?"/>
-                                    </default-field>
-                                </field>
-                                <field-layout>
-                                    <field-row-big>
-                                        <field-ref name="submitButton"/>
-                                    </field-row-big>
-                                </field-layout>
-                            </form-single>
-                        </container-dialog>
-                    </widgets>
-                </section>
-                <section name="CancleOrdersSection" condition="statusId &amp;&amp;
-                    (statusId.contains('TMOHSConfirmed') || statusId.contains('TMOHSPlaced') || statusId.contains('TMOHSApproved'))">
-                    <widgets>
-                        <container-dialog id="CancleOrdersDialog" button-text="Cancle Orders">
-                            <label text="Cancle orders matching current find options. Use the Find Options dialog to adjust as needed before doing this."
-                                   type="p"/>
-                            <label text="Cancling an order will cancel all items not yet shipped. If all items cancelled then the order will be Cancelled. If any item was shipped the order will be Completed."
-                                   type="p"/>
-                            <form-single name="CancleOrdersForm" transition="changeTestMachineOrderStatus"
-                                         pass-through-parameters="true">
-                                <field name="toStatusId" from="'TMOHSCancelled'">
-                                    <default-field>
-                                        <hidden/>
-                                    </default-field>
-                                </field>
-                                <field name="submitButton">
-                                    <default-field title="Cancle Orders">
-                                        <submit confirmation="Do the current find options and orders displayed match what you want to close (cancel all unshipped, complete any partially shipped)?"/>
-                                    </default-field>
-                                </field>
-                                <field-layout>
-                                    <field-row-big>
-                                        <field-ref name="submitButton"/>
-                                    </field-row-big>
-                                </field-layout>
-                            </form-single>
-                        </container-dialog>
-                    </widgets>
-                </section>
             </row-col>
         </container-row>
 
-        <form-list name="TestMachineOrderList" list="testMachineOrderList" skip-form="true" header-dialog="true" select-columns="true"
+        <form-list name="OrderList" list="orderList" skip-form="true" header-dialog="true" select-columns="true"
                    saved-finds="true"
                    show-csv-button="true" show-xlsx-button="true" show-all-button="true">
-            <entity-find entity-name="beiyelin.testmachine.TestMachineOrderFindView" list="testMachineOrderList" use-clone="true">
-                <search-form-inputs default-order-by="-requestDate,testMachineOrderId"
+            <entity-find entity-name="mantle.order.OrderPartFindView" list="orderList" use-clone="true">
+                <search-form-inputs default-order-by="-entryDate,orderId,orderPartSeqId"
                                     skip-fields="vendorRoleTypeId,customerRoleTypeId,customerClassificationId">
-                    <!-- NOTE: TMOHSOpen no longer included by default to exclude shopping cart orders (salesChannelEnumId == 'ScWeb') -->
-                    <default-parameters statusId="TMOHSOpen,TMOHSConfirmed,TMOHSApproved"
-                                        statusId_op="in"
-                                        requestDate_poffset="-3" requestDate_period="30d"/>
+
+                    <default-parameters partStatusId="OrderOpen,OrderPlaced,OrderApproved,OrderHold,OrderProcessing"
+                                        partStatusId_op="in"
+                                        entryDate_poffset="-3" entryDate_period="30d"/>
                 </search-form-inputs>
                 <date-filter from-field-name="customerClassFromDate" thru-field-name="customerClassThruDate"
                              ignore="!customerClassificationId"/>
+                <!--                <econdition field-name="vendorRoleTypeId" value="OrgInternal" ignore="!'sales'.equalsIgnoreCase(orderType)"/>-->
+                <!--                <econdition field-name="customerRoleTypeId" value="OrgInternal" ignore="!'purchase'.equalsIgnoreCase(orderType)"/>-->
                 <econdition field-name="customerClassificationId" ignore-if-empty="true"/>
+                <!--                <econdition field-name="itemTypeEnumId" operator="in" ignore-if-empty="true" or-null="true"/>-->
+                <!--                <econdition field-name="itemTypeEnumId" operator="equals" ignore-if-empty="true" or-null="true"/>-->
                 <econdition field-name="productId" operator="in" from="findProductId" ignore-if-empty="true"/>
+                <econdition field-name="orderTypeEnumId" operator="equals" from="curOrderTypeEnumId" ignore-if-empty="true"/>
                 <econdition field-name="quantity" operator="greater-equals" from="findQuantity_from"
                             ignore-if-empty="true"/>
                 <econdition field-name="quantity" operator="less-equals" from="findQuantity_thru"
                             ignore-if-empty="true"/>
-
                 <having-econditions>
                     <econdition field-name="issuedQuantity" operator="greater" from="0.0"
                                 ignore="onlyPartlyShipped != 'true'"/>
@@ -257,8 +243,8 @@ along with this software (see the LICENSE.md file). If not, see
                                 ignore="inventoryAvailable != 'none'"/>
                 </having-econditions>
                 <!-- NOTE: need to select issuedQuantity,quantityNotAvailable if having conditions are used (EntityFindBuilder doesn't yet add these to sub-select automatically) -->
-<!--                <select-field-->
-<!--                        field-name="currencyUomId,orderPartSeqId${onlyPartlyShipped=='true' ? ',issuedQuantity' : ''}${inventoryAvailable in ['all','partial','none','notall'] ? ',quantityNotAvailable' : ''}${inventoryAvailable in ['partial','none'] ? ',quantity' : ''}"/>-->
+                <select-field
+                        field-name="currencyUomId,orderPartSeqId${onlyPartlyShipped=='true' ? ',issuedQuantity' : ''}${inventoryAvailable in ['all','partial','none','notall'] ? ',quantityNotAvailable' : ''}${inventoryAvailable in ['partial','none'] ? ',quantity' : ''}"/>
             </entity-find>
             <row-actions>
                 <!-- Customer Classification -->
@@ -268,20 +254,25 @@ along with this software (see the LICENSE.md file). If not, see
                     <econdition field-name="classificationTypeEnumId" value="PcltCustomer"/>
                 </entity-find>
                 <!-- Shipments -->
-                <entity-find entity-name="beiyelin.testmachine.TestMachineOrderItemShipSummary" list="oissList">
-                    <econdition field-name="testMachineOrderId"/>
-                    <econdition field-name="testMachineOrderItemSeqId"/>
+                <entity-find entity-name="mantle.order.OrderItemShipSummary" list="oissList">
+                    <econdition field-name="orderId"/>
+                    <econdition field-name="orderPartSeqId"/>
                     <having-econditions>
                         <econdition field-name="shipmentQuantity" operator="greater" from="0.0"/>
                     </having-econditions>
                     <select-field field-name="shipmentId,shipmentQuantity,quantityHandled"/>
                 </entity-find>
-
+                <!-- Other Parties -->
+                <entity-find entity-name="mantle.order.OrderPartPartyDetail" list="partPartyList">
+                    <econdition field-name="orderId"/>
+                    <econdition field-name="orderPartSeqId"/>
+                    <select-field field-name="partyId,pseudoId,firstName,lastName,organizationName,description"/>
+                </entity-find>
                 <!-- Total Quantity: query separate if findQuantity_from || findQuantity_thru, will be wrong if there are items filtered by this constraint -->
                 <if condition="findQuantity_from || findQuantity_thru">
-                    <entity-find entity-name="beiyelin.testmachine.TestMachineOrderItemSummary" list="totalQtyList">
-                        <econdition field-name="testMachineOrderId"/>
-<!--                        <econdition field-name="orderPartSeqId"/>-->
+                    <entity-find entity-name="mantle.order.OrderItemSummary" list="totalQtyList">
+                        <econdition field-name="orderId"/>
+                        <econdition field-name="orderPartSeqId"/>
                         <select-field field-name="quantity"/>
                     </entity-find>
                     <if condition="totalQtyList">
@@ -289,6 +280,24 @@ along with this software (see the LICENSE.md file). If not, see
                     </if>
                 </if>
             </row-actions>
+
+<!--
+            <field name="orderTypeEnumId">
+                <header-field title="Order Type">
+                    <drop-down allow-empty="true" allow-multiple="true">
+                        <entity-options key="${enumId}" text="${description}">
+                            <entity-find entity-name="moqui.basic.EnumAndGroup" list="itemTypeEnumList">
+                                <econdition field-name="enumGroupEnumId" from="'EngTestMachineOrderType'"/>
+                                <order-by field-name="description"/>
+                            </entity-find>
+                        </entity-options>
+                    </drop-down>
+                </header-field>
+                <default-field container-style="text-strong">
+                    <display-entity entity-name="moqui.basic.Enumeration"/>
+                </default-field>
+            </field>
+-->
 
             <field name="onlyPartlyShipped">
                 <header-field title="Shipped">
@@ -316,16 +325,25 @@ along with this software (see the LICENSE.md file). If not, see
                 </header-field>
             </field>
 
-            <field name="testMachineOrderId">
-                <header-field title="Test Machine Order" show-order-by="true">
+
+            <field name="orderId">
+                <header-field title="Order" show-order-by="true">
                     <text-find size="20" hide-options="true"/>
                 </header-field>
                 <default-field>
-                    <link text="${testMachineOrderId}" url="testMachineOrderDetail" link-type="anchor" condition="testMachineOrderId"/>
+                    <link text="${orderId}:${orderPartSeqId}" url="orderDetail" link-type="anchor" condition="orderId"/>
+                </default-field>
+            </field>
+            <field name="otherPartyOrderId">
+                <header-field title="Their Order" show-order-by="true">
+                    <text-find size="20" hide-options="true"/>
+                </header-field>
+                <default-field>
+                    <display/>
                 </default-field>
             </field>
 
-            <field name="testMachineOrderName">
+            <field name="orderName">
                 <header-field>
                     <text-find size="40"/>
                 </header-field>
@@ -334,16 +352,18 @@ along with this software (see the LICENSE.md file). If not, see
                 </default-field>
             </field>
 
-
-            <field name="requestDate">
+            <field name="priority" align="center">
                 <header-field show-order-by="true">
-                    <date-period/>
+                    <range-find/>
                 </header-field>
                 <default-field>
-                    <display/>
+                    <display
+                            text="${priority == 1 ? '-- ' : (priority == 2 || priority == 3 ? '- ' : '')}${priority?:''}${priority == 1 ? ' --' : (priority == 2 || priority == 3 ? ' -' : '')}"
+                            style="${priority == 1 ? 'text-strong text-danger' : (priority == 2 || priority == 3 ? 'text-strong text-warning' : '')}"/>
                 </default-field>
             </field>
-            <field name="approvedDate">
+
+            <field name="entryDate">
                 <header-field show-order-by="true">
                     <date-period/>
                 </header-field>
@@ -376,20 +396,48 @@ along with this software (see the LICENSE.md file). If not, see
                 </default-field>
             </field>
 
-            <field name="statusId">
+            <field name="planTakeBackDate">
+                <header-field show-order-by="true">
+                    <date-period/>
+                </header-field>
+                <default-field>
+                    <display/>
+                </default-field>
+            </field>
+
+            <field name="estimatedDeliveryDate">
+                <header-field show-order-by="true">
+                    <date-period/>
+                </header-field>
+                <default-field>
+                    <display/>
+                </default-field>
+            </field>
+
+            <field name="partStatusId">
                 <header-field title="Status" show-order-by="true">
                     <widget-template-include
-                            location="component://webroot/template/screen/BasicWidgetTemplates.xml#statusDropDown">
-                        <set field="statusTypeId" value="TestMachineOrderHeader"/>
+                            location="component://beiyelin-screens/template/ReusableWidgetTemplates.xml#statusFlowItemDropDown">
                         <set field="allowMultiple" value="true"/>
+                        <set field="statusFlowId" value="TestMachinePurchase"/>
                     </widget-template-include>
+
+                    <!--                    TestMachinePurchase 的状态最完整，所以就用它-->
+                    <!--                    <drop-down allow-empty="true" >-->
+                    <!--                        <entity-options key="${toStatusId}" text="StatusTransitionNameTemplate">-->
+                    <!--                            <entity-find entity-name="moqui.basic.StatusFlowTransitionToDetail">-->
+                    <!--                                   <econdition field-name="statusFlowId" from="'TestMachinePurchase'"/>-->
+                    <!--                            </entity-find>-->
+                    <!--                        </entity-options>-->
+                    <!--                    </drop-down>-->
+
                 </header-field>
                 <default-field container-style="text-strong">
                     <display-entity entity-name="moqui.basic.StatusItem"/>
                 </default-field>
             </field>
-            <field name="vendorFacilityId">
-                <header-field title="Vendor Facility" show-order-by="true">
+            <field name="facilityId">
+                <header-field title="Facility" show-order-by="true">
                     <drop-down allow-empty="true">
                         <dynamic-options transition="getFacilityList" server-search="true" min-length="0"
                                          parameter-map="[facilityTypeEnumId:'FcTpWarehouse']"/>
@@ -397,25 +445,24 @@ along with this software (see the LICENSE.md file). If not, see
                 </header-field>
                 <default-field>
                     <link url="editFacility" entity-name="mantle.facility.Facility" text="FacilityNameTemplate"
-                          parameter-map="[facilityId:vendorFacilityId]"
                           link-type="anchor"/>
                 </default-field>
             </field>
-
-            <field name="customerFacilityId">
-                <header-field title="Customer Facility" show-order-by="true">
+            <field name="productStoreId">
+                <header-field title="Store" show-order-by="true">
                     <drop-down allow-empty="true">
-                        <dynamic-options transition="getFacilityList" server-search="true" min-length="0"
-                                         parameter-map="[facilityTypeEnumId:'FcTpWarehouse']"/>
+                        <entity-options key="${productStoreId}" text="${productStoreId}: ${storeName}">
+                            <entity-find entity-name="mantle.product.store.ProductStore">
+                                <order-by field-name="storeName"/>
+                            </entity-find>
+                        </entity-options>
                     </drop-down>
                 </header-field>
                 <default-field>
-                    <link url="editFacility" entity-name="mantle.facility.Facility" text="FacilityNameTemplate"
-                          parameter-map="[facilityId:customerFacilityId]"
-                          link-type="anchor"/>
+                    <display-entity entity-name="mantle.product.store.ProductStore"
+                                    text="${productStoreId}: ${storeName}"/>
                 </default-field>
             </field>
-
             <field name="shippingInstructions">
                 <header-field show-order-by="true">
                     <text-find size="40"/>
@@ -463,6 +510,38 @@ along with this software (see the LICENSE.md file). If not, see
                         </entity-options>
                     </drop-down>
                 </header-field>
+            </field>
+
+            <field name="otherPartyId">
+                <header-field title="Other Party">
+                    <drop-down allow-empty="true">
+                        <dynamic-options transition="searchPartyList" server-search="true" min-length="2"/>
+                    </drop-down>
+                </header-field>
+            </field>
+            <field name="otherRoleTypeId">
+                <header-field title="Other Role">
+                    <drop-down allow-empty="true">
+                        <entity-options key="${roleTypeId}" text="${description}">
+                            <entity-find entity-name="mantle.party.RoleGroupMemberAndType" cache="true">
+                                <econdition field-name="roleGroupEnumId" value="RgpOrder"/>
+                                <order-by field-name="description"/>
+                            </entity-find>
+                        </entity-options>
+                    </drop-down>
+                </header-field>
+            </field>
+            <field name="otherParties">
+                <default-field>
+                    <section-iterate name="OtherPartyListSection" list="partPartyList" entry="partParty">
+                        <widgets>
+                            <container>
+                                <link url="editParty" link-type="anchor" parameter-map="[partyId:partParty.partyId]"
+                                      text="* ${ec.resource.expand('PartyNameTemplate','',partParty)} - ${partParty.description?:'N/A'}"/>
+                            </container>
+                        </widgets>
+                    </section-iterate>
+                </default-field>
             </field>
 
             <field name="shipmentMethodEnumId">
@@ -539,7 +618,14 @@ along with this software (see the LICENSE.md file). If not, see
                 </default-field>
             </field>
 
-
+            <field name="partTotal" align="right" show-total="sum">
+                <header-field show-order-by="true" title="Total">
+                    <range-find/>
+                </header-field>
+                <default-field>
+                    <display currency-unit-field="currencyUomId"/>
+                </default-field>
+            </field>
             <field name="quantityTotal" align="right" show-total="sum">
                 <header-field show-order-by="true" title="Quantity Total">
                     <range-find/>
@@ -566,6 +652,22 @@ along with this software (see the LICENSE.md file). If not, see
                 </default-field>
             </field>
 
+            <!--            <field name="purchaseItemTypeEnumId"><header-field title="Purchase Item Type">-->
+            <!--                <drop-down allow-multiple="true">-->
+            <!--                    <entity-options key="${enumId}" text="${description}">-->
+            <!--                        <entity-find entity-name="moqui.basic.EnumAndGroup" list="itemTypeEnumList">-->
+            <!--                            <econdition field-name="enumGroupEnumId" value="EngItemsPurchase"/>-->
+            <!--                            <order-by field-name="description"/></entity-find></entity-options>-->
+            <!--                </drop-down>-->
+            <!--            </header-field></field>-->
+            <!--            <field name="salesItemTypeEnumId"><header-field title="Sales Item Type">-->
+            <!--                <drop-down allow-multiple="true">-->
+            <!--                    <entity-options key="${enumId}" text="${description}">-->
+            <!--                        <entity-find entity-name="moqui.basic.EnumAndGroup" list="itemTypeEnumList">-->
+            <!--                            <econdition field-name="enumGroupEnumId" value="EngItemsSales"/>-->
+            <!--                            <order-by field-name="description"/></entity-find></entity-options>-->
+            <!--                </drop-down>-->
+            <!--            </header-field></field>-->
             <field name="findProductId">
                 <header-field title="Product">
                     <drop-down allow-multiple="true">
@@ -599,55 +701,60 @@ along with this software (see the LICENSE.md file). If not, see
 
             <columns>
                 <column>
-                    <field-ref name="testMachineOrderId"/>
+<!--                    <field-ref name="orderTypeEnumId"/>-->
+                    <field-ref name="orderId"/>
+                    <field-ref name="otherPartyOrderId"/>
                 </column>
                 <column>
-                    <field-ref name="statusId"/>
+                    <field-ref name="partStatusId"/>
+                    <field-ref name="priority"/>
+                    <field-ref name="partTotal"/>
                 </column>
                 <column>
-                    <field-ref name="requestDate"/>
-                    <field-ref name="approvedDate"/>
-                </column>
-                <column>
+                    <field-ref name="entryDate"/>
                     <field-ref name="placedDate"/>
                     <field-ref name="shipBeforeDate"/>
                 </column>
                 <column>
-                    <field-ref name="shipmentMethodEnumId"/>
+                    <field-ref name="facilityId"/>
+                    <field-ref name="productStoreId"/>
                     <field-ref name="shippingInstructions"/>
                 </column>
                 <column>
                     <field-ref name="vendorPartyId"/>
-                    <field-ref name="vendorFacilityId"/>
-                </column>
-                <column>
                     <field-ref name="customerPartyId"/>
-                    <field-ref name="customerFacilityId"/>
+                    <field-ref name="otherParties"/>
                 </column>
                 <column>
+                    <field-ref name="shipmentMethodEnumId"/>
                     <field-ref name="carrierPartyId"/>
                     <field-ref name="shipments"/>
                 </column>
             </columns>
             <columns type="mobile">
                 <column>
-                    <field-ref name="testMachineOrderId"/>
-                    <field-ref name="statusId"/>
-
+                    <field-ref name="orderId"/>
+                    <field-ref name="partStatusId"/>
+                    <field-ref name="partTotal"/>
                 </column>
                 <column>
                     <field-ref name="placedDate"/>
+                    <field-ref name="productStoreId"/>
                     <field-ref name="customerPartyId"/>
                 </column>
             </columns>
         </form-list>
-        <section name="ShowSql" condition="testMachineOrderList_xafind?.getQueryTextList()"><widgets>
-            <container-dialog id="ShowSqlDialog" button-text="Show SQL" type="info">
-                <section-iterate name="ShowSqlIter" list="testMachineOrderList_xafind?.getQueryTextList()" entry="queryText"><widgets>
-                    <label text="${queryText}" type="p"/>
-                    <label text="${testMachineOrderList_xafind}" type="p"/>
-                </widgets></section-iterate>
-            </container-dialog>
-        </widgets></section>
+        <section name="ShowSql" condition="orderList_xafind?.getQueryTextList()">
+            <widgets>
+                <container-dialog id="ShowSqlDialog" button-text="Show SQL" type="info">
+                    <section-iterate name="ShowSqlIter" list="orderList_xafind?.getQueryTextList()" entry="queryText">
+                        <widgets>
+                            <label text="${queryText}" type="p"/>
+                            <label text="${orderList_xafind}" type="p"/>
+                        </widgets>
+                    </section-iterate>
+                </container-dialog>
+            </widgets>
+        </section>
     </widgets>
 </screen>

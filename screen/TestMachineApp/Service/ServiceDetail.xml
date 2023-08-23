@@ -37,6 +37,8 @@ along with this software (see the LICENSE.md file). If not, see
         <set field="secas" from="ec.service.secaRulesByServiceName.get(sd.serviceNameNoHash)"/>
         <set field="serviceActionScript" from="serviceNode.first('actions')?.toString()"/>
 
+        <set field="fileLocation" from="serviceNode.attribute('location')"/>
+<!--        <message>Service Node: ${serviceNode}</message>-->
 <!--        <message>getChildrenByName:${serviceNode.getChildrenByName()}</message>-->
 
 <!--        <set field="actionNodeList" from="serviceNode.first('actions').child(3).child(0)"/>-->
@@ -49,53 +51,53 @@ along with this software (see the LICENSE.md file). If not, see
                 <message>child3: ${actionNodeList.child(3)}</message>
         -->
         <script><![CDATA[
+            import groovy.json.JsonOutput
             import org.moqui.util.MNode
 
-            serviceCallReg = /service\..*\.name\(\"(.*)\"\)/
 
             def ArrayList<MNode> getMNodeByName(MNode curNode, String filterStr) {
                 ArrayList<MNode> r = new ArrayList<>()
-                if(filterStr.equals(curNode.name)) r.add(curNode)
+                if (filterStr.equals(curNode.name)) r.add(curNode)
 //                ec.message.addMessage(ec.resource.expand("curNode name: ${curNode.name}",''), "info")
 //                ec.message.addMessage(ec.resource.expand("curNode size : ${curNode.size()}",''), "info")
-                if(curNode.size() == 1 && curNode.getText()){
+                if (curNode.size() == 1 && curNode.getText()) {
 
 //                    这是是CDATA内容，需要按字符串方式匹配了。先不处理
 
                     return r
                 }
 
-                for(int i=0; i < curNode.size(); i++){
+                for (int i = 0; i < curNode.size(); i++) {
                     rtnList = getMNodeByName(curNode.child(i), filterStr)
-                    if(rtnList.size() > 0) r.addAll(rtnList)
+                    if (rtnList.size() > 0) r.addAll(rtnList)
                 }
                 return r
             }
+//            服务名称匹配正则表达式
+            serviceCallReg = /service\..*\.name\(\"(.*)\"\)/
 
-            def ArrayList<String> getServiceCallName(MNode curNode,String filterStr) {
+//            如果是xml定义，则从名称中可以提取服务名，如果是脚本，则通过正则表达式提取
+            def ArrayList<String> getServiceCallName(MNode curNode, String filterStr) {
                 ArrayList<String> r = new ArrayList<>()
-                if(filterStr.equals(curNode.name)){
+                if (filterStr.equals(curNode.name)) {
                     r.add(curNode.attribute("name"))
 //                    ec.message.addMessage(ec.resource.expand("curNode : ${curNode}",''), "info")
 //                    ec.message.addMessage(ec.resource.expand("curNode name : ${curNode.attribute("name")}",''), "info")
                 }
-                if(curNode.size() == 1 && curNode.getText()){
-
-//                    这是是CDATA内容，需要按字符串方式匹配了。先不处理
+                if (curNode.size() == 1 && curNode.getText()) {
 //                    ec.message.addMessage(ec.resource.expand("text : ${curNode.getText()}",''), "info")
                     matcher = curNode.getText() =~ serviceCallReg
-                    for(int k=0; k< matcher.size(); k++){
+                    for (int k = 0; k < matcher.size(); k++) {
                         r.add(matcher[k][1].toString())
 //                        ec.message.addMessage(ec.resource.expand("matcher ${k}-1: ${matcher[k][1].toString()}",''), "info")
                     }
-
 //                    ec.message.addMessage(ec.resource.expand("matcher : ${matcher.toString()}",''), "info")
                     return r
                 }
 
-                for(int i=0; i < curNode.size(); i++){
+                for (int i = 0; i < curNode.size(); i++) {
                     rtnList = getServiceCallName(curNode.child(i), filterStr)
-                    if(rtnList.size() > 0) r.addAll(rtnList)
+                    if (rtnList.size() > 0) r.addAll(rtnList)
                 }
                 return r
             }
@@ -104,10 +106,58 @@ along with this software (see the LICENSE.md file). If not, see
 //            ec.message.addMessage(ec.resource.expand('''Begin getMNodeByName''',''), "info")
 
 
-            allServiceCallList = getServiceCallName(serviceNode,"service-call").unique()
+            allServiceCallList = getServiceCallName(serviceNode, "service-call").unique()
 
+//            以下是创建echart关系图的脚本，关系图看起来并不方便，所以先掩藏
+//            def static void createLinks(String rootNode,ArrayList<String> nodeCallList, ArrayList<Map> servicelinks){
+//                nodeCallList.forEach { servicelinks.add([source:rootNode,target: it])}
+//            }
+//
+//            ArrayList<String> searchServiceNameList = new ArrayList<String>()
+//            ArrayList<String> searchedServiceNameList = new ArrayList<String>()
+//            ArrayList<Map> serviceLinksList = new ArrayList<Map>()
+//            curRootNodeName = serviceName
+//
+//            searchServiceNameList.addAll(allServiceCallList)
+//            createLinks(curRootNodeName,allServiceCallList, serviceLinksList)
+//            searchedServiceNameList.add(curRootNodeName)
+//
+//            while(searchServiceNameList.size() > 0){
+//                String curRootNodeName = searchServiceNameList.pop()
+//                curNodeDefine = ec.service.getServiceDefinition(curRootNodeName)
+//                if(!curNodeDefine) continue
+//                curNode = curNodeDefine.serviceNode
+//                curServiceCallList = getServiceCallName(curNode, "service-call").unique()
+//
+//                createLinks(curRootNodeName,curServiceCallList,serviceLinksList)
+//                searchedServiceNameList.add(curRootNodeName)
+//
+//                curServiceCallList.forEach {if(!searchedServiceNameList.contains(it)) searchServiceNameList.add(it)}
+//
+//            }
+//
+//
+//
+//
+//            ArrayList<Object> nodeList = new ArrayList<>()
+//            class RelationNode{
+//                String name
+//                List<Integer> symbolSize
+//            }
+//            searchedServiceNameList.forEach {
+//
+//                width = it.size()*8
+//                nodeList.add(new RelationNode(name: it,symbolSize: [width,30]))
+//            }
+//
+//            serviceNodes = JsonOutput.toJson(nodeList)
+//            serviceLinks = JsonOutput.toJson(serviceLinksList)
+
+//            ec.message.addMessage(ec.resource.expand("serviceNodes : ${serviceNodes}",''), "info")
+
+//            sns = ec.service.getKnownServiceNames()
+//            ec.message.addMessage(ec.resource.expand("curKnownServiceNames : ${sns}",''), "info")
 //            ec.message.addMessage(ec.resource.expand('''End getMNodeByName''',''), "info")
-
             ]]></script>
 <!--        <message>allServiceCallList: ${allServiceCallList}</message>-->
     </actions>
@@ -121,6 +171,7 @@ along with this software (see the LICENSE.md file). If not, see
             <label type="p" text="Authenticate: ${sd.authenticate}"/>
             <label type="p" text="Service Type: ${sd.serviceType}${sd.location ? ', Location: ' + sd.location : ''}${sd.method ? ', Method: ' + sd.method : ''}"/>
             <label type="p" text="Tx Ignore: ${sd.txIgnore}, Force New: ${sd.txForceNew}, Use Tx Cache: ${sd.txUseCache}, Timeout: ${sd.txTimeout}"/>
+            <label type="p" text="File location: ${fileLocation}"/>
         </box-body></container-box>
 
         <container-box><box-header><label type="h5" text="In Parameters test"/></box-header><box-body-nopad>
@@ -153,21 +204,230 @@ along with this software (see the LICENSE.md file). If not, see
                 <field name="entityField"><default-field><display text="${parameterNode.attribute('entity-name') ?: ''}${parameterNode.attribute('field-name') ? '.' + parameterNode.attribute('field-name') : ''}"/></default-field></field>
             </form-list>
         </box-body-nopad></container-box>
-        <container-box>
-            <box-header><label type="h5" text="Called Sevice" /> </box-header>
-            <box-body>
-                <form-list name="ServiceCallList" list="allServiceCallList" list-entry="serviceCall">
-                    <field name="serviceName" from="serviceCall">
-                        <default-field title="Service Name">
-                            <link url="." parameter-map="[serviceName:serviceCall]" text="${serviceCall}" link-type="anchor"/>
-                        </default-field>
-                    </field>
 
-                </form-list>
-            </box-body>
+<!--        <container-box >-->
+<!--            <box-header><label type="h5" text="Called Sevice" /> </box-header>-->
+<!--            <box-body>-->
+<!--                <form-list name="ServiceCallList" list="allServiceCallList" list-entry="serviceCall">-->
+<!--                    <field name="serviceName" from="serviceCall">-->
+<!--                        <default-field title="Service Name">-->
+<!--                            <link url="." parameter-map="[serviceName:serviceCall]" text="${serviceCall}" link-type="anchor"/>-->
+<!--                        </default-field>-->
+<!--                    </field>-->
 
-        </container-box>
+<!--                </form-list>-->
+<!--            </box-body>-->
 
+<!--        </container-box>-->
+
+<!--        用echarts关系图显示服务之间的调用关系-->
+<!--        <container-box>-->
+<!--            <box-header><label type="h5" text="Call Relationship Diagram" /> </box-header>-->
+<!--            <box-body>-->
+<!--                <container id="callRelationDiagram" >-->
+<!--                    <render-mode><text type="html,vuet,qvt"><![CDATA[-->
+<!--                            <script>-->
+<!--                                var drawDiagram = function(){-->
+<!--                                    var callRelationDiagram = echarts.init(document.getElementById('callRelationDiagram'), null, {-->
+<!--                                        height:500-->
+<!--                                        });-->
+
+<!--                                    callRelationDiagram.setOption(-->
+<!--                                        option = {-->
+<!--                                            series: [{-->
+<!--                                                type: 'graph',-->
+<!--                                                layout: 'force',-->
+<!--                                                force:{-->
+<!--                                                    repulsion: 30000,-->
+<!--                                                    gravity: 0.05,-->
+<!--                                                },-->
+<!--                                                data: ${serviceNodes},-->
+<!--                                                links: ${serviceLinks},-->
+<!--                                                emphasis: {-->
+<!--                                                    focus: 'adjacency',-->
+<!--                                                    label: {-->
+<!--                                                        position: 'inside',-->
+<!--                                                        show: true-->
+<!--                                                    }-->
+<!--                                                },-->
+<!--                                                roam: true,-->
+<!--                                                symbol:'rect',-->
+<!--                                                draggable: true,-->
+<!--                                                label:{-->
+<!--                                                    show: true-->
+<!--                                                },-->
+<!--                                                lineStyle: {-->
+<!--                                                    width: 1,-->
+<!--                                                    curveness: 0.3,-->
+<!--                                                    opacity: 0.7,-->
+<!--                                                    cap: 'round',-->
+<!--                                                    join: 'bevel'-->
+<!--                                                }-->
+<!--                                            }]-->
+<!--                                        },-->
+<!--                                    true);-->
+
+<!--                                    window.addEventListener('resize', function() {-->
+<!--                                        callRelationDiagram.resize();-->
+<!--                                    });-->
+<!--                                    callRelationDiagram.on('click',-->
+<!--                                        function({dataType,name}){-->
+<!--                                                console.log('dataType:',dataType)-->
+<!--                                                console.log('name:',name)-->
+<!--                                            }-->
+<!--                                        )-->
+<!--                                }-->
+<!--                                    if (typeof echarts != "undefined"){ drawDiagram();}//在qvt和vue下执行，在app模式下，共onload调用-->
+<!--                                </script>-->
+<!--                            ]]></text></render-mode>-->
+<!--                    <render-mode><text type="vuet,qvt"><![CDATA[-->
+<!--                            <script>-->
+<!--                                    var callRelationDiagram = echarts.init(document.getElementById('callRelationDiagram'), null, {-->
+<!--                                        height:500-->
+<!--                                        });-->
+
+<!--                                    callRelationDiagram.setOption(-->
+<!--                                        option = {-->
+<!--                                            series: [{-->
+<!--                                                type: 'graph',-->
+<!--                                                layout: 'force',-->
+<!--                                                force:{-->
+<!--                                                    repulsion: 30000,-->
+<!--                                                    gravity: 0.05,-->
+<!--                                                },-->
+<!--                                                data: ${serviceNodes},-->
+<!--                                                links: ${serviceLinks},-->
+<!--                                                emphasis: {-->
+<!--                                                    focus: 'adjacency',-->
+<!--                                                    label: {-->
+<!--                                                        position: 'inside',-->
+<!--                                                        show: true-->
+<!--                                                    }-->
+<!--                                                },-->
+<!--                                                roam: true,-->
+<!--                                                symbol:'rect',-->
+<!--                                                draggable: true,-->
+<!--                                                label:{-->
+<!--                                                    show: true-->
+<!--                                                },-->
+<!--                                                lineStyle: {-->
+<!--                                                    width: 1,-->
+<!--                                                    curveness: 0.3,-->
+<!--                                                    opacity: 0.7,-->
+<!--                                                    cap: 'round',-->
+<!--                                                    join: 'bevel'-->
+<!--                                                }-->
+<!--                                            }]-->
+<!--                                        },-->
+<!--                                    true);-->
+
+<!--                                    window.addEventListener('resize', function() {-->
+<!--                                        callRelationDiagram.resize();-->
+<!--                                    });-->
+<!--                                    callRelationDiagram.on('click',-->
+<!--                                        function({dataType,name}){-->
+<!--                                                console.log('dataType:',dataType)-->
+<!--                                                console.log('name:',name)-->
+<!--                                            }-->
+<!--                                        )-->
+<!--                            </script>-->
+<!--                            ]]></text></render-mode>-->
+
+<!--                </container>-->
+<!--            </box-body>-->
+
+<!--        </container-box>-->
+        <section name="ServiceCallRelationDiagram" condition=" allServiceCallList.size() > 0">
+            <widgets>
+                <container-box>
+                    <box-header><label type="h5" text="Call Relationship Diagram" /> </box-header>
+                    <box-body>
+                        <tree name="ServiceCallTree">
+                            <parameter name="allServiceCallList"/>
+                            <tree-node name="ServiceNode">
+                                <actions>
+                                    <!-- <entity-find-related-one value-field="nodeList_entry" relationship-name="WorkEffortPurpose#moqui.basic.Enumeration" to-value-field="childPurpose" cache="true"/> -->
+                                    <message type="info">nodeList_entry: ${nodeList_entry}</message>
+                                </actions>
+                                <link url="." text="${nodeList_entry}" id="${nodeList_entry}"><!-- ${childPurpose?.description} - -->
+                                    <parameter name="serviceName" from="nodeList_entry"/></link>
+                                <tree-sub-node node-name="ServiceNode" list="childServiceCallList">
+                                    <actions>
+                                        <message type="info">treeNodeId: ${treeNodeId}</message>
+                                        <set field="childServiceName" from="treeNodeId"/>
+                                        <script><![CDATA[
+                                            import groovy.json.JsonOutput
+                                            import org.moqui.util.MNode
+
+                                            childServiceCallList = new ArrayList<String>()
+                                            curNodeDefine = ec.service.getServiceDefinition(childServiceName)
+                                            if(!curNodeDefine) return childServiceCallList
+                                            curNode = curNodeDefine.serviceNode
+
+                                            serviceCallReg = /service\..*\.name\(\"(.*)\"\)/
+
+//                                            def ArrayList<MNode> getMNodeByName(MNode curNode, String filterStr) {
+//                                                ArrayList<MNode> r = new ArrayList<>()
+//                                                if (filterStr.equals(curNode.name)) r.add(curNode)
+//                                                if (curNode.size() == 1 && curNode.getText()) {
+//
+//                            //                    这是是CDATA内容，需要按字符串方式匹配了。先不处理
+//
+//                                                    return r
+//                                                }
+//
+//                                                for (int i = 0; i < curNode.size(); i++) {
+//                                                    rtnList = getMNodeByName(curNode.child(i), filterStr)
+//                                                    if (rtnList.size() > 0) r.addAll(rtnList)
+//                                                }
+//                                                return r
+//                                            }
+
+                                            def ArrayList<String> getServiceCallName(MNode curNode, String filterStr) {
+                                                ArrayList<String> r = new ArrayList<>()
+                                                if (filterStr.equals(curNode.name)) {
+                                                    r.add(curNode.attribute("name"))
+
+                                                }
+                                                if (curNode.size() == 1 && curNode.getText()) {
+                                                    matcher = curNode.getText() =~ serviceCallReg
+                                                    for (int k = 0; k < matcher.size(); k++) {
+                                                        r.add(matcher[k][1].toString())
+                                                    }
+                                                    return r
+                                                }
+
+                                                for (int i = 0; i < curNode.size(); i++) {
+                                                    rtnList = getServiceCallName(curNode.child(i), filterStr)
+                                                    if (rtnList.size() > 0) r.addAll(rtnList)
+                                                }
+                                                return r
+                                            }
+
+
+                                            childServiceCallList = getServiceCallName(curNode, "service-call").unique()
+                                            return childServiceCallList
+                                            ]]></script>
+
+                                    </actions>
+                                </tree-sub-node>
+                            </tree-node>
+                            <tree-sub-node node-name="ServiceNode" list="rootServiceCallList">
+                                <actions>
+                                    <script>
+                                        rootServiceCallList = allServiceCallList.split(',')
+                                    </script>
+
+<!--                                    <message type="info">allServiceCallList: ${allServiceCallList}</message>-->
+<!--                                    <message type="info">rootServiceCallList: ${rootServiceCallList}</message>-->
+                                </actions>
+
+                            </tree-sub-node>
+                        </tree>
+                    </box-body>
+                </container-box>
+            </widgets>
+        </section>
         <section name="XmlActionDisplaySection" condition="sd.xmlAction"><widgets>
             <label text="XML Actions" type="h3"/>
             <container type="pre" style="line-numbers"><label text="${serviceNode.first('actions')?.toString()}"
@@ -197,6 +457,7 @@ along with this software (see the LICENSE.md file). If not, see
         <render-mode><text type="html,vuet,qvt"><![CDATA[
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/themes/prism-twilight.min.css" type="text/css"/>
             <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/prism.min.js" type="text/javascript"></script>
+<!--            <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.2/echarts.min.js" type="text/javascript" onload="drawDiagram();"></script>-->
         ]]></text></render-mode>
     </widgets>
 </screen>

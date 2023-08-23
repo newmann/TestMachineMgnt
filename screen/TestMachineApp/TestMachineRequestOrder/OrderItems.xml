@@ -44,9 +44,9 @@ along with this software (see the LICENSE.md file). If not, see
     <transition-include name="getProductPrice" location="component://SimpleScreens/template/product/ProductTransitions.xml"/>
 
     <subscreens>
-        <subscreens-item name="EditItem" location="component://TestMachineMgnt/screen/TestMachineApp/Order/OrderDetail/EditItem.xml"/>
-        <subscreens-item name="ItemReserve" location="component://TestMachineMgnt/screen/TestMachineApp/Order/OrderDetail/ItemReserve.xml"/>
-        <subscreens-item name="ReturnItem" location="component://TestMachineMgnt/screen/TestMachineApp/Order/OrderDetail/ReturnItem.xml"/>
+        <subscreens-item name="EditItem" location="component://TestMachineMgnt/screen/TestMachineApp/TestMachineRequestOrder/OrderDetail/EditItem.xml"/>
+        <subscreens-item name="ItemReserve" location="component://TestMachineMgnt/screen/TestMachineApp/TestMachineRequestOrder/OrderDetail/ItemReserve.xml"/>
+        <subscreens-item name="ReturnItem" location="component://TestMachineMgnt/screen/TestMachineApp/TestMachineRequestOrder/OrderDetail/ReturnItem.xml"/>
     </subscreens>
 
     <actions>

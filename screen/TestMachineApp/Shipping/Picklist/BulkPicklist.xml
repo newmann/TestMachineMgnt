@@ -16,7 +16,8 @@ along with this software (see the LICENSE.md file). If not, see
         default-menu-title="Bulk Create Picklists" default-menu-include="false">
 
     <transition name="shipmentDetail"><default-response url="//${appRoot}/Shipment/ShipmentDetail"/></transition>
-    <transition name="orderDetail"><default-response url="//${appRoot}/Order/OrderDetail"/></transition>
+<!--    <transition name="orderDetail"><default-response url="//${appRoot}/Order/OrderDetail"/></transition>-->
+    <transition-include name="orderDetail" location="component://TestMachineMgnt/template/order/OrderTransitions.xml"/>
 
     <transition name="editFacility"><default-response url="//${appRoot}/Facility/EditFacility"/></transition>
     <transition name="editParty"><default-response url="//${appRoot}/Party/EditParty"/></transition>

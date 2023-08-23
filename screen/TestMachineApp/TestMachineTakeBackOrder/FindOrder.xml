@@ -16,14 +16,12 @@ along with this software (see the LICENSE.md file). If not, see
         default-menu-title="Find Order" default-menu-include="false">
 
 <!--    <transition name="orderDetail"><default-response url="../OrderDetail"/></transition>-->
-    <transition-include name="orderDetail" location="component://TestMachineMgnt/screen/TestMachineApp/Order/FindOrder.xml"/>
-<!--    <transition name="createOrder"><service-call name="mantle.order.OrderServices.create#Order"/>-->
-<!--        <default-response url="../OrderDetail"/></transition>-->
-    <transition-include name="createOrder" location="component://TestMachineMgnt/screen/TestMachineApp/Order/FindOrder.xml"/>
+    <transition-include name="orderDetail" location="component://TestMachineMgnt/template/order/OrderTransitions.xml"/>
+    <transition name="createOrder"><service-call name="mantle.order.OrderServices.create#Order"/>
+        <default-response url="../OrderDetail"/></transition>
 
-<!--    <transition name="changeOrderPartsStatus"><service-call name="mantle.order.OrderBulkServices.change#OrderPartsStatus"/>
-        <default-response url="."/></transition>-->
-    <transition-include name="changeOrderPartsStatus" location="component://TestMachineMgnt/screen/TestMachineApp/Order/FindOrder.xml"/>
+    <transition name="changeOrderPartsStatus"><service-call name="mantle.order.OrderBulkServices.change#OrderPartsStatus"/>
+        <default-response url="."/></transition>
 
     <transition name="editFacility"><default-response url="//${appRoot}/Facility/EditFacility"/></transition>
     <transition name="editParty"><default-response url="//${appRoot}/Party/EditParty"/></transition>
@@ -36,15 +34,14 @@ along with this software (see the LICENSE.md file). If not, see
     <transition-include name="getFacilityList" location="component://SimpleScreens/template/facility/FacilityTransitions.xml"/>
     <transition-include name="getGeoCountryStates" location="component://SimpleScreens/template/party/PartyForms.xml"/>
 
-<!--    <transition name="getWhFacilitiesByOwner">
+    <transition name="getWhFacilitiesByOwner">
         <service-call name="mantle.facility.FacilityServices.get#FacilitiesByOwner"
                 in-map="[ownerPartyId:(customerPartyId ?: vendorPartyId), productStoreId:productStoreId, facilityTypeEnumId:'FcTpWarehouse']"
                 web-send-json-response="resultList"/>
         <default-response type="none"/>
-    </transition>-->
-    <transition-include name="getWhFacilitiesByOwner" location="component://TestMachineMgnt/screen/TestMachineApp/Order/FindOrder.xml"/>
+    </transition>
 
-<!--    <transition name="getStoreOrgOrAllOrgInternal"><parameter name="productStoreId"/><actions>
+    <transition name="getStoreOrgOrAllOrgInternal"><parameter name="productStoreId"/><actions>
         <if condition="productStoreId">
             <entity-find-one entity-name="mantle.product.store.ProductStore" value-field="productStore">
                 <field-map field-name="productStoreId"/></entity-find-one>
@@ -67,8 +64,7 @@ along with this software (see the LICENSE.md file). If not, see
             for (party in partyList) outList.add([value:party.partyId, label:ec.resource.expand("PartyNameTemplate", "", party)])
             ec.web.sendJsonResponse(outList)
         </script>
-    </actions><default-response type="none"/></transition>-->
-    <transition-include name="getStoreOrgOrAllOrgInternal" location="component://TestMachineMgnt/screen/TestMachineApp/Order/FindOrder.xml"/>
+    </actions><default-response type="none"/></transition>
 
     <actions>
 <!--        <set field="itemTypeEnumId" from="'ItemTestMachine'"/>-->

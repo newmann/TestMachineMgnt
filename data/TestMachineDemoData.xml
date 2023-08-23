@@ -70,7 +70,7 @@ along with this software (see the LICENSE.md file). If not, see
             <parties contactMechPurposeId="PhonePrimary" fromDate="1265184000000" allowSolicitation="Y"/>
         </mantle.party.contact.ContactMech>
 
-        <mantle.party.contact.ContactMech contactMechId="CustBeiGuoAddr" contactMechTypeEnumId="CmtPostalAddress">
+        <mantle.party.contact.ContactMech contactMechId="CustEjetonAddr" contactMechTypeEnumId="CmtPostalAddress">
             <postalAddress toName="服务台" attnName="" address1="深圳市宝安区西乡街道南昌社区南昌第二工业区新零售数字化产业园B栋6层" address2="" unitNumber="188"
                            city="shengzhun" stateProvinceGeoId="CHN_44" countryGeoId="CHN"
                            telecomContactMechId="CustEjetonTeln"/>

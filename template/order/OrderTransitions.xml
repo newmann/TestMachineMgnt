@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+This software is in the public domain under CC0 1.0 Universal plus a 
+Grant of Patent License.
+
+To the extent possible under law, the author(s) have dedicated all
+copyright and related and neighboring rights to this software to the
+public domain worldwide. This software is distributed without any
+warranty.
+
+You should have received a copy of the CC0 Public Domain Dedication
+along with this software (see the LICENSE.md file). If not, see
+<http://creativecommons.org/publicdomain/zero/1.0/>.
+-->
+<screen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-3.xsd">
+
+    <transition name="orderDetail">
+        <parameter name="orderId" required="true"/>
+        <actions>
+            <entity-find-one entity-name="mantle.order.OrderHeader" value-field="orderHeader"/>
+
+            <if condition="orderHeader.orderTypeEnumId == 'OtTestMachineRequest"><then>
+                <set field="callPath" value="TestMachineRequestOrder/OrderDetail"/>
+            </then><else>
+                <if condition="orderHeader.orderTypeEnumId == 'OtTestMachinePurchase"><then>
+                    <set field="callPath" value="TestMachinePurchaseOrder/OrderDetail"/>
+                </then><else>
+                    <if condition="orderHeader.orderTypeEnumId == 'OtTestMachineSales"><then>
+                        <set field="callPath" value="TestMachineSalesOrder/OrderDetail"/>
+                    </then><else>
+                        <if condition="orderHeader.orderTypeEnumId == 'OtTestMachineTakeBack"><then>
+                            <set field="callPath" value="TestMachineTackBackOrder/OrderDetail"/>
+                        </then><else>
+<!--                            //TODO should be updated-->
+                            <set field="callPath" value="Order/OrderDetail"/>
+                        </else>
+                        </if>
+                    </else>
+                    </if>
+
+                </else>
+                </if>
+            </else></if>
+
+        </actions>
+        <default-response url="//${appRoot}/${callPath}"/>
+    </transition>
+
+    <transition name="findOrder">
+        <actions>
+            <entity-find-one entity-name="mantle.order.OrderHeader" value-field="orderHeader"/>
+
+            <if condition="orderHeader.orderTypeEnumId == 'OtTestMachineRequest"><then>
+                <set field="callPath" from="'//' + ${appRoot} + '/TestMachineRequestOrder/FindOrder'"/>
+            </then><else>
+                <if condition="orderHeader.orderTypeEnumId == 'OtTestMachinePurchase"><then>
+                    <set field="callPath" from="'//' + ${appRoot} + '/TestMachinePurchaseOrder/FindOrder'"/>
+                </then><else>
+                    <if condition="orderHeader.orderTypeEnumId == 'OtTestMachineSales"><then>
+                        <set field="callPath" from="'//' + ${appRoot} + '/TestMachineSalesOrder/FindOrder'"/>
+                    </then><else>
+                        <if condition="orderHeader.orderTypeEnumId == 'OtTestMachineTakeBack"><then>
+                            <set field="callPath" from="'//' + ${appRoot} + '/TestMachineTackBackOrder/FindOrder'"/>
+                        </then><else>
+                            <!--                            //TODO should be updated-->
+                            <set field="callPath" from="'//' + ${appRoot} + '/Order/FindOrder'"/>
+                        </else>
+                        </if>
+                    </else>
+                    </if>
+
+                </else>
+                </if>
+            </else></if>
+
+        </actions>
+        <default-response url="${callPath}"/>
+    </transition>
+
+    <widgets>
+    </widgets>
+</screen>
